@@ -1,20 +1,23 @@
-import {
-  WATER_LEVEL_UPDATED_AT,
-  type WaterLevelProvider,
-  type WaterLevelReading,
-} from "./waterLevelProvider.js";
+import { readPegelonlineWater } from "./pegelonline.js";
+import { failedStation, type WaterLevelProvider, type WaterStationResult } from "./waterLevelProvider.js";
+
+const meta = {
+  id: "ruhrort" as const,
+  name: "Ruhrort",
+  river: "Rijn",
+  source: "PEGELONLINE",
+};
 
 export class RuhrortProvider implements WaterLevelProvider {
-  getReading(): WaterLevelReading {
-    return {
-      id: "ruhrort",
-      name: "Ruhrort",
-      river: "Rijn",
-      levelCm: 286,
-      changeCm: 3,
-      trend: "stijgend",
-      status: "normaal",
-      updatedAt: WATER_LEVEL_UPDATED_AT,
-    };
+  async getCurrentData(): Promise<WaterStationResult> {
+    try {
+      const reading = await readPegelonlineWater({
+        uuid: "c0f51e35-d0e8-4318-afaf-c5fcbc29f4c1",
+        shortname: "DUISBURG-RUHRORT",
+      });
+      return { ...meta, ...reading, error: null };
+    } catch (error) {
+      return failedStation(meta, error);
+    }
   }
 }

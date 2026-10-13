@@ -8,6 +8,7 @@ import { WaterLevelCard } from "../components/WaterLevelCard";
 import { WeatherCard } from "../components/WeatherCard";
 import { useAmsterdamNow } from "../hooks/useAmsterdamNow";
 import { useWaterLevels } from "../services/waterLevelService";
+import type { WaterLevelsResponse } from "../types";
 
 const STAGE_WIDTH = 1920;
 const STAGE_HEIGHT = 1080;
@@ -17,11 +18,18 @@ function readScale() {
   return Math.min(window.innerWidth / STAGE_WIDTH, window.innerHeight / STAGE_HEIGHT);
 }
 
+function latestUpdatedAt(levels: WaterLevelsResponse) {
+  const stamps = [levels.kaub.updatedAt, levels.ruhrort.updatedAt, levels.maxau.updatedAt].filter(
+    (value): value is string => typeof value === "string" && value.length > 0,
+  );
+  return stamps.sort().at(-1) ?? null;
+}
+
 export function DashboardPage() {
   const now = useAmsterdamNow();
   const [scale, setScale] = useState(readScale);
   const water = useWaterLevels();
-  const updatedAt = water.status === "ready" ? (water.data[0]?.updatedAt ?? null) : null;
+  const updatedAt = water.status === "ready" ? latestUpdatedAt(water.data) : null;
 
   useEffect(() => {
     const update = () => setScale(readScale());
@@ -50,11 +58,13 @@ export function DashboardPage() {
               {water.status === "empty" ? (
                 <CardState className="col-span-3" status="empty" title="Waterstanden" message="Geen peilgegevens." />
               ) : null}
-              {water.status === "ready"
-                ? water.data.map((reading, index) => (
-                    <WaterLevelCard key={reading.id} reading={reading} delay={index * 0.05} />
-                  ))
-                : null}
+              {water.status === "ready" ? (
+                <>
+                  <WaterLevelCard station={water.data.kaub} delay={0} />
+                  <WaterLevelCard station={water.data.ruhrort} delay={0.05} />
+                  <WaterLevelCard station={water.data.maxau} delay={0.1} />
+                </>
+              ) : null}
               <DieselCard />
             </section>
             <section className="grid h-[252px] shrink-0 grid-cols-[3fr_2fr] gap-3">

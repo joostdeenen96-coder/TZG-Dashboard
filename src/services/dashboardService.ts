@@ -1,14 +1,4 @@
-import type { DieselSurcharge, NewsItem, ProjectSlide, QueryState, WeatherReport } from "../types";
-
-const dieselSurcharge: DieselSurcharge = {
-  percentage: 12.4,
-  periodLabel: "oktober 2026",
-  note: "Gasolieprijs van september.",
-  trend: "stijgend",
-  changePoints: 0.2,
-  status: "geldig",
-  updatedAt: "2026-10-13T06:15:00+02:00",
-};
+import type { NewsItem, ProjectSlide, QueryState, WeatherReport } from "../types";
 
 const weather: WeatherReport = {
   location: "Gennep",
@@ -105,10 +95,6 @@ const slides: ProjectSlide[] = [
 
 const slideIntervalMs = 8000;
 
-export function getDieselSurcharge() {
-  return dieselSurcharge;
-}
-
 export function getWeather() {
   return weather;
 }
@@ -126,10 +112,6 @@ function readResult<T>(load: () => T, isEmpty: (value: T) => boolean, emptyMessa
     const message = error instanceof Error ? error.message : emptyMessage;
     return { status: "error", message };
   }
-}
-
-export function readDiesel(): QueryState<DieselSurcharge> {
-  return readResult(getDieselSurcharge, () => false, "Dieseltoeslag niet beschikbaar.");
 }
 
 export function readWeather(): QueryState<WeatherReport> {

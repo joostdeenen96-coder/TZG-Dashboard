@@ -1,20 +1,20 @@
-import {
-  WATER_LEVEL_UPDATED_AT,
-  type WaterLevelProvider,
-  type WaterLevelReading,
-} from "./waterLevelProvider.js";
+import { readMaxauFromHvz } from "./hvzDataset.js";
+import { failedStation, type WaterLevelProvider, type WaterStationResult } from "./waterLevelProvider.js";
+
+const meta = {
+  id: "maxau" as const,
+  name: "Maxau",
+  river: "Rijn",
+  source: "HVZ Baden-Württemberg",
+};
 
 export class MaxauProvider implements WaterLevelProvider {
-  getReading(): WaterLevelReading {
-    return {
-      id: "maxau",
-      name: "Maxau",
-      river: "Rijn",
-      levelCm: 512,
-      changeCm: -11,
-      trend: "dalend",
-      status: "normaal",
-      updatedAt: WATER_LEVEL_UPDATED_AT,
-    };
+  async getCurrentData(): Promise<WaterStationResult> {
+    try {
+      const reading = await readMaxauFromHvz();
+      return { ...meta, ...reading, error: null };
+    } catch (error) {
+      return failedStation(meta, error);
+    }
   }
 }

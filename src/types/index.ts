@@ -4,16 +4,20 @@ export type WaterTrend = "stijgend" | "dalend" | "gelijk";
 
 export type WaterStationId = "kaub" | "ruhrort" | "maxau";
 
-export type WaterLevelReading = {
+export type WaterStationResult = {
   id: WaterStationId;
   name: string;
   river: string;
-  levelCm: number;
-  changeCm: number;
-  trend: WaterTrend;
-  status: WaterStatus;
-  updatedAt: string;
+  levelCm: number | null;
+  changeCm: number | null;
+  trend: WaterTrend | null;
+  status: WaterStatus | null;
+  updatedAt: string | null;
+  source: string;
+  error: string | null;
 };
+
+export type WaterLevelsResponse = Record<WaterStationId, WaterStationResult>;
 
 export type QueryState<T> =
   | { status: "loading" }

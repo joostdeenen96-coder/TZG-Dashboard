@@ -1,20 +1,23 @@
-import {
-  WATER_LEVEL_UPDATED_AT,
-  type WaterLevelProvider,
-  type WaterLevelReading,
-} from "./waterLevelProvider.js";
+import { readPegelonlineWater } from "./pegelonline.js";
+import { failedStation, type WaterLevelProvider, type WaterStationResult } from "./waterLevelProvider.js";
+
+const meta = {
+  id: "kaub" as const,
+  name: "Kaub",
+  river: "Rijn",
+  source: "PEGELONLINE",
+};
 
 export class KaubProvider implements WaterLevelProvider {
-  getReading(): WaterLevelReading {
-    return {
-      id: "kaub",
-      name: "Kaub",
-      river: "Rijn",
-      levelCm: 168,
-      changeCm: -4,
-      trend: "dalend",
-      status: "laag",
-      updatedAt: WATER_LEVEL_UPDATED_AT,
-    };
+  async getCurrentData(): Promise<WaterStationResult> {
+    try {
+      const reading = await readPegelonlineWater({
+        uuid: "1d26e504-7f9e-480a-b52c-5932be6549ab",
+        shortname: "KAUB",
+      });
+      return { ...meta, ...reading, error: null };
+    } catch (error) {
+      return failedStation(meta, error);
+    }
   }
 }

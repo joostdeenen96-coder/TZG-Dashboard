@@ -20,12 +20,12 @@ npm run preview
 
 ## Opbouw
 
-- Bovenbalk met woordmerk en live klok (Europe/Amsterdam)
+- Bovenbalk met logo en live klok (Europe/Amsterdam)
 - Vier kaarten: Kaub, Ruhrort, Maxau en dieseltoeslag
 - Weerbericht Gennep en laatste bedrijfsnieuws
 - Diavoorstelling van projecten, wisselt elke 8 seconden
 
-Waterstanden komen alleen van `GET /api/waterlevels`. Weer, nieuws, diesel en projectfoto’s staan in `src/services/dashboardService.ts`.
+De browser praat alleen met deze API. Waterstanden: `GET /api/waterlevels`. Dieseltoeslag: `GET /api/dieselsurcharge`. Weer, nieuws en projectfoto’s staan in `src/services/dashboardService.ts`. Bronnen, providers en het wisselen van de dieselbron staan in `docs/architectuur.md`.
 
 ## Foto’s
 

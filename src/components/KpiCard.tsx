@@ -76,7 +76,7 @@ export function KpiCard({
           <span className="text-gold">{trend}</span>
           <span className="text-mist">{delta}</span>
         </p>
-        <p className="mt-1 text-[15px] text-mist">{updatedLabel}</p>
+        <p className="mt-1 truncate text-[15px] text-mist">{updatedLabel}</p>
       </div>
     </motion.article>
   );

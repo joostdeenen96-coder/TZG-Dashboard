@@ -1,10 +1,10 @@
 import { formatAmsterdamTime, formatDieselChange, formatDutchPercent } from "../lib/format";
-import { readDiesel } from "../services/dashboardService";
+import { useDieselSurcharge } from "../services/dieselService";
 import { CardState } from "./CardState";
 import { KpiCard } from "./KpiCard";
 
 export function DieselCard() {
-  const state = readDiesel();
+  const state = useDieselSurcharge();
 
   if (state.status === "error") {
     return <CardState status="error" title="Dieseltoeslag" message={state.message} />;
