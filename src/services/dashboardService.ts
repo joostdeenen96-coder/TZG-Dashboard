@@ -1,37 +1,4 @@
-import type {
-  DieselSurcharge,
-  NewsItem,
-  ProjectSlide,
-  WaterLevel,
-  WeatherReport,
-} from "../types";
-
-const waterLevels: WaterLevel[] = [
-  {
-    id: "kaub",
-    name: "Kaub",
-    river: "Rijn",
-    levelCm: 168,
-    changeCm: -4,
-    status: "laag",
-  },
-  {
-    id: "ruhrort",
-    name: "Ruhrort",
-    river: "Rijn",
-    levelCm: 286,
-    changeCm: 3,
-    status: "normaal",
-  },
-  {
-    id: "maxau",
-    name: "Maxau",
-    river: "Rijn",
-    levelCm: 512,
-    changeCm: -11,
-    status: "normaal",
-  },
-];
+import type { DieselSurcharge, NewsItem, ProjectSlide, WeatherReport } from "../types";
 
 const dieselSurcharge: DieselSurcharge = {
   percentage: 12.4,
@@ -127,10 +94,6 @@ const slides: ProjectSlide[] = [
 ];
 
 const slideIntervalMs = 8000;
-
-export function getWaterLevels() {
-  return waterLevels;
-}
 
 export function getDieselSurcharge() {
   return dieselSurcharge;

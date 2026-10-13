@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Minus, Waves } from "lucide-react";
 import { formatWaterChange } from "../lib/format";
-import { getWaterLevels } from "../services/dashboardService";
-import type { WaterStatus } from "../types";
+import { useWaterLevels } from "../services/waterLevelService";
+import type { WaterStationId, WaterStatus } from "../types";
 
 const statusStyle: Record<
   WaterStatus,
@@ -25,11 +25,11 @@ const statusStyle: Record<
 };
 
 type WaterLevelCardProps = {
-  stationId: string;
+  stationId: WaterStationId;
 };
 
 export function WaterLevelCard({ stationId }: WaterLevelCardProps) {
-  const level = getWaterLevels().find((item) => item.id === stationId);
+  const level = useWaterLevels().find((item) => item.id === stationId);
   if (!level) return null;
   const status = statusStyle[level.status];
   const Arrow = level.changeCm < 0 ? ArrowDown : level.changeCm > 0 ? ArrowUp : Minus;

@@ -25,7 +25,7 @@ npm run preview
 - Weerbericht Gennep en laatste bedrijfsnieuws
 - Diavoorstelling van projecten, wisselt elke 8 seconden
 
-De cijfers en berichten staan in `src/services/dashboardService.ts` en zijn voorbeelddata.
+Waterstanden komen uit `src/services/waterLevelService.ts` (nu de mock-provider). Weer, nieuws, diesel en projectfoto’s staan in `src/services/dashboardService.ts`.
 
 ## Foto’s
 

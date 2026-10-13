@@ -6,7 +6,7 @@ import { SlideshowCard } from "../components/SlideshowCard";
 import { WaterLevelCard } from "../components/WaterLevelCard";
 import { WeatherCard } from "../components/WeatherCard";
 import { useAmsterdamNow } from "../hooks/useAmsterdamNow";
-import { getWaterLevels } from "../services/dashboardService";
+import { useWaterLevels } from "../services/waterLevelService";
 
 const STAGE_WIDTH = 1920;
 const STAGE_HEIGHT = 1080;
@@ -19,7 +19,7 @@ function readScale() {
 export function DashboardPage() {
   const now = useAmsterdamNow();
   const [scale, setScale] = useState(readScale);
-  const waterLevels = getWaterLevels();
+  const waterLevels = useWaterLevels();
 
   useEffect(() => {
     const update = () => setScale(readScale());
