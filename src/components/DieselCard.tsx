@@ -1,12 +1,9 @@
 import { Fuel } from "lucide-react";
-import type { DieselSurcharge } from "../data/dieselSurcharge";
 import { formatDutchPercent } from "../lib/format";
+import { getDieselSurcharge } from "../services/dashboardService";
 
-type DieselSurchargeCardProps = {
-  surcharge: DieselSurcharge;
-};
-
-export function DieselSurchargeCard({ surcharge }: DieselSurchargeCardProps) {
+export function DieselCard() {
+  const surcharge = getDieselSurcharge();
   return (
     <article className="tv-card relative flex h-full flex-col overflow-hidden px-5 py-4">
       <span className="absolute inset-y-0 left-0 w-1.5 bg-[#e0a35a]" />

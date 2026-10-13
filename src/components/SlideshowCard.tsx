@@ -1,24 +1,22 @@
 import { MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
-import { SLIDE_MS, type ProjectSlide } from "../data/projects";
+import { getSlideIntervalMs, getSlides } from "../services/dashboardService";
 
-type ProjectSlideshowProps = {
-  projects: ProjectSlide[];
-};
-
-export function ProjectSlideshow({ projects }: ProjectSlideshowProps) {
+export function SlideshowCard() {
+  const slides = getSlides();
+  const intervalMs = getSlideIntervalMs();
   const [index, setIndex] = useState(0);
   const [failed, setFailed] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (projects.length < 2) return;
+    if (slides.length < 2) return;
     const id = window.setInterval(() => {
-      setIndex((current) => (current + 1) % projects.length);
-    }, SLIDE_MS);
+      setIndex((current) => (current + 1) % slides.length);
+    }, intervalMs);
     return () => window.clearInterval(id);
-  }, [index, projects.length]);
+  }, [index, intervalMs, slides.length]);
 
-  const active = projects[index];
+  const active = slides[index];
 
   return (
     <section
@@ -26,7 +24,7 @@ export function ProjectSlideshow({ projects }: ProjectSlideshowProps) {
       aria-roledescription="carrousel"
       aria-label="Projectfoto's"
     >
-      {projects.map((project, slideIndex) => {
+      {slides.map((project, slideIndex) => {
         const visible = slideIndex === index;
         const broken = failed[project.id] === true;
         return (
@@ -55,7 +53,7 @@ export function ProjectSlideshow({ projects }: ProjectSlideshowProps) {
       <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/15 to-black/25" />
 
       <div className="absolute top-5 right-6 z-30 font-display text-[22px] tracking-[0.18em] text-white/80 tabular-nums">
-        {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
+        {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
       </div>
 
       {active ? (
@@ -73,7 +71,7 @@ export function ProjectSlideshow({ projects }: ProjectSlideshowProps) {
             </p>
           </div>
           <div className="mb-2 flex items-center gap-2.5">
-            {projects.map((project, dotIndex) => (
+            {slides.map((project, dotIndex) => (
               <button
                 key={project.id}
                 type="button"
@@ -93,7 +91,7 @@ export function ProjectSlideshow({ projects }: ProjectSlideshowProps) {
         <div
           key={index}
           className="progress-bar h-full w-full bg-teune"
-          style={{ animationDuration: `${SLIDE_MS}ms` }}
+          style={{ animationDuration: `${intervalMs}ms` }}
         />
       </div>
     </section>

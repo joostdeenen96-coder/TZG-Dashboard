@@ -1,5 +1,6 @@
 import { Cloud, CloudDrizzle, CloudRain, CloudSun, Droplets, MapPin, Sun, Wind } from "lucide-react";
-import type { WeatherIconName, WeatherReport } from "../data/weather";
+import { getWeather } from "../services/dashboardService";
+import type { WeatherIconName } from "../types";
 
 const icons = {
   cloud: Cloud,
@@ -9,11 +10,8 @@ const icons = {
   "sun-cloud": CloudSun,
 } satisfies Record<WeatherIconName, typeof Cloud>;
 
-type WeatherCardProps = {
-  weather: WeatherReport;
-};
-
-export function WeatherCard({ weather }: WeatherCardProps) {
+export function WeatherCard() {
+  const weather = getWeather();
   const CurrentIcon = icons[weather.icon];
 
   return (

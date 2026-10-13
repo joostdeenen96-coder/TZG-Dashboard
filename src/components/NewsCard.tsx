@@ -1,14 +1,13 @@
 import { Newspaper } from "lucide-react";
-import type { NewsItem } from "../data/news";
 import { formatRelativeDutch } from "../lib/format";
+import { getNews } from "../services/dashboardService";
 
 type NewsCardProps = {
-  items: NewsItem[];
   now: Date;
 };
 
-export function NewsCard({ items, now }: NewsCardProps) {
-  const visible = items.slice(0, 4);
+export function NewsCard({ now }: NewsCardProps) {
+  const visible = getNews().slice(0, 4);
 
   return (
     <article className="tv-card flex h-full flex-col px-5 py-4">
