@@ -82,34 +82,28 @@ De publieke dataset die de HVZ-site zelf ververst, bestaat uit twee gestructuree
 
 ## Dieseltoeslag
 
-`DieselSurchargeProvider` heeft `getCurrentData()`. De registratie staat alleen in `server/services/dieselSurchargeService.ts`:
+`DieselSurchargeProvider` heeft `getCurrentData()`. De registratie staat in `server/services/dieselSurchargeService.ts`. Standaard is SharePoint actief:
 
 ```ts
-const activeDieselSource: DieselSource = "mock";
+const activeDieselSource: DieselSource = "sharepoint";
 ```
 
-Zet die waarde op `"sharepoint"` om `MockDieselProvider` te vervangen door `SharePointDieselProvider`. Verder hoeft er niets te wijzigen.
+`SharePointDieselProvider` leest via Microsoft Graph de site `https://teunesen.sharepoint.com/sites/Facturatie` en de lijst `Dieseltoeslagen Asvervoer`. Het record met `Actief = true` is de actuele toeslag. Bij meerdere actieve records wint de laatste peildatum. De app-registratie komt uit `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID` en `GRAPH_CLIENT_SECRET`. Die waarden staan niet in de repository.
 
-| Implementatie | Rol |
-| --- | --- |
-| `MockDieselProvider` | Actief. Huidige toeslag: 12,4 procent, oktober 2026, bijgewerkt 06:15 |
-| `SharePointDieselProvider` | Stub voor een latere Microsoft Graph-koppeling. Geen SDK, geen geheim, geen netwerk. Niet geselecteerd. Aangeroepen gooit hij een fout, zodat er geen nepcijfer terugkomt |
+Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record), dan logt de service de fout en valt terug op `MockDieselProvider`. Die fallback blijft de laatste lokale cijfers: peildatum 2026-10-13, toeslag 12,4 procent, actief. Er is geen dieselprijs in die fallback (`dieselPrijs` is 0).
 
-`GET /api/dieselsurcharge` geeft het actieve object. Faalt de provider, dan antwoordt de route met HTTP 502 en `{ "error": "..." }`.
+`GET /api/dieselsurcharge` geeft:
 
 ```json
 {
-  "percentage": 12.4,
-  "periodLabel": "oktober 2026",
-  "note": "Gasolieprijs van september.",
-  "trend": "stijgend",
-  "changePoints": 0.2,
-  "status": "geldig",
-  "updatedAt": "2026-10-13T06:15:00+02:00"
+  "peildatum": "2026-10-13",
+  "dieselPrijs": 0,
+  "toeslagPercentage": 12.4,
+  "actief": true
 }
 ```
 
-`src/services/dieselService.ts` leest alleen dat pad. Componenten en `dashboardService` importeren geen dieselprovider en geen SharePoint.
+`src/services/dieselService.ts` leest alleen dat pad. Componenten en `dashboardService` importeren geen dieselprovider.
 
 ## Wat live is en wat nog mock
 
@@ -117,5 +111,5 @@ Zet die waarde op `"sharepoint"` om `MockDieselProvider` te vervangen door `Shar
 | --- | --- | --- |
 | Kaub, Ruhrort | PEGELONLINE via onze API | live |
 | Maxau | HVZ-dataset via onze API | live |
-| Dieseltoeslag | `MockDieselProvider` via onze API | mock, klaar om te wisselen |
+| Dieseltoeslag | SharePoint via Microsoft Graph, mock alleen bij een Graph-fout | live zodra de Graph-variabelen gezet zijn |
 | Weer, nieuws, projectfoto’s | `src/services/dashboardService.ts` | mock, geen externe site |

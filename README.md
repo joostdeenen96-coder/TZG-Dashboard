@@ -25,7 +25,7 @@ npm run preview
 - Weerbericht Gennep en laatste bedrijfsnieuws
 - Diavoorstelling van projecten, wisselt elke 8 seconden
 
-De browser praat alleen met deze API. Waterstanden: `GET /api/waterlevels`. Dieseltoeslag: `GET /api/dieselsurcharge`. Weer, nieuws en projectfoto’s staan in `src/services/dashboardService.ts`. Bronnen, providers en het wisselen van de dieselbron staan in `docs/architectuur.md`.
+De browser praat alleen met deze API. Waterstanden: `GET /api/waterlevels`. Dieseltoeslag: `GET /api/dieselsurcharge`, standaard uit SharePoint via Microsoft Graph. Zonder `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID` en `GRAPH_CLIENT_SECRET` valt de API terug op de lokale dieselcijfers. Weer, nieuws en projectfoto’s staan in `src/services/dashboardService.ts`. Details staan in `docs/architectuur.md`.
 
 ## Foto’s
 

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { DieselSurcharge, QueryState, WaterTrend } from "../types";
+import type { DieselSurcharge, QueryState } from "../types";
 
 const DIESEL_PATH = "/api/dieselsurcharge";
 const REFRESH_MS = 5 * 60 * 1000;
@@ -19,10 +19,6 @@ function delay(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-function isTrend(value: unknown): value is WaterTrend {
-  return value === "stijgend" || value === "dalend" || value === "gelijk";
-}
-
 function mapPayload(payload: unknown): DieselSurcharge | "empty" {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new Error("Dieseltoeslag heeft een ongeldig formaat.");
@@ -31,24 +27,18 @@ function mapPayload(payload: unknown): DieselSurcharge | "empty" {
   if (typeof row.error === "string" && row.error.trim()) throw new Error(row.error);
   if (Object.keys(row).length === 0) return "empty";
   if (
-    typeof row.percentage !== "number" ||
-    typeof row.periodLabel !== "string" ||
-    typeof row.note !== "string" ||
-    !isTrend(row.trend) ||
-    typeof row.changePoints !== "number" ||
-    typeof row.status !== "string" ||
-    typeof row.updatedAt !== "string"
+    typeof row.peildatum !== "string" ||
+    typeof row.dieselPrijs !== "number" ||
+    typeof row.toeslagPercentage !== "number" ||
+    typeof row.actief !== "boolean"
   ) {
     throw new Error("Dieseltoeslag heeft een ongeldig formaat.");
   }
   return {
-    percentage: row.percentage,
-    periodLabel: row.periodLabel,
-    note: row.note,
-    trend: row.trend,
-    changePoints: row.changePoints,
-    status: row.status,
-    updatedAt: row.updatedAt,
+    peildatum: row.peildatum,
+    dieselPrijs: row.dieselPrijs,
+    toeslagPercentage: row.toeslagPercentage,
+    actief: row.actief,
   };
 }
 

@@ -26,13 +26,10 @@ export type QueryState<T> =
   | { status: "ready"; data: T };
 
 export type DieselSurcharge = {
-  percentage: number;
-  periodLabel: string;
-  note: string;
-  trend: WaterTrend;
-  changePoints: number;
-  status: string;
-  updatedAt: string;
+  peildatum: string;
+  dieselPrijs: number;
+  toeslagPercentage: number;
+  actief: boolean;
 };
 
 export type WeatherIconName = "cloud" | "rain" | "showers" | "sun" | "sun-cloud";

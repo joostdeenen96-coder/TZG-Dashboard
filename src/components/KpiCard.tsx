@@ -11,7 +11,7 @@ type KpiCardProps = {
   unit: string;
   status: string;
   tone: KpiTone;
-  trend: WaterTrend;
+  trend?: WaterTrend;
   delta: string;
   updatedLabel: string;
   delay?: number;
@@ -72,9 +72,13 @@ export function KpiCard({
           <span className="mb-1 text-[22px] font-medium text-mist">{unit}</span>
         </p>
         <p className="mt-2 flex items-center gap-2 text-[17px] font-medium text-paper">
-          <TrendIcon className="h-4 w-4 text-gold" strokeWidth={2.4} />
-          <span className="text-gold">{trend}</span>
-          <span className="text-mist">{delta}</span>
+          {trend ? (
+            <>
+              <TrendIcon className="h-4 w-4 text-gold" strokeWidth={2.4} />
+              <span className="text-gold">{trend}</span>
+            </>
+          ) : null}
+          <span className={trend ? "text-mist" : "text-paper"}>{delta}</span>
         </p>
         <p className="mt-1 truncate text-[15px] text-mist">{updatedLabel}</p>
       </div>

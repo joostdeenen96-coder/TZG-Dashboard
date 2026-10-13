@@ -9,8 +9,19 @@ const dieselProviders = {
 
 type DieselSource = keyof typeof dieselProviders;
 
-const activeDieselSource: DieselSource = "mock";
+const activeDieselSource: DieselSource = "sharepoint";
 
-export function getDieselSurcharge(): DieselSurcharge {
-  return dieselProviders[activeDieselSource].getCurrentData();
+export async function getDieselSurcharge(): Promise<DieselSurcharge> {
+  try {
+    const record = await dieselProviders[activeDieselSource].getCurrentData();
+    console.info(
+      `Dieseltoeslag via ${activeDieselSource}: peildatum ${record.peildatum}, toeslag ${record.toeslagPercentage}%, actief ${record.actief}.`,
+    );
+    return record;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "onbekende fout";
+    console.error(`Dieseltoeslag via ${activeDieselSource} mislukt (${message}). Terugval op MockDieselProvider.`);
+    if (activeDieselSource === "mock") throw error;
+    return dieselProviders.mock.getCurrentData();
+  }
 }

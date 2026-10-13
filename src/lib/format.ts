@@ -69,6 +69,15 @@ export function formatPublicationDate(iso: string) {
   return publicationFormatter.format(new Date(iso));
 }
 
+const euroFormatter = new Intl.NumberFormat("nl-NL", {
+  style: "currency",
+  currency: "EUR",
+});
+
+export function formatEuro(value: number) {
+  return euroFormatter.format(value);
+}
+
 export function formatDieselChange(points: number) {
   const amount = formatDutchPercent(Math.abs(points));
   if (points < 0) return `${amount} procentpunt lager dan gisteren`;

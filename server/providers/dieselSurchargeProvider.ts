@@ -1,15 +1,10 @@
-export type DieselTrend = "stijgend" | "dalend" | "gelijk";
-
 export type DieselSurcharge = {
-  percentage: number;
-  periodLabel: string;
-  note: string;
-  trend: DieselTrend;
-  changePoints: number;
-  status: string;
-  updatedAt: string;
+  peildatum: string;
+  dieselPrijs: number;
+  toeslagPercentage: number;
+  actief: boolean;
 };
 
 export interface DieselSurchargeProvider {
-  getCurrentData(): DieselSurcharge;
+  getCurrentData(): Promise<DieselSurcharge>;
 }

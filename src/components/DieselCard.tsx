@@ -1,7 +1,13 @@
-import { formatAmsterdamTime, formatDieselChange, formatDutchPercent } from "../lib/format";
+import { formatDutchPercent, formatEuro, formatPublicationDate } from "../lib/format";
 import { useDieselSurcharge } from "../services/dieselService";
 import { CardState } from "./CardState";
 import { KpiCard } from "./KpiCard";
+
+function formatPeildatum(value: string) {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return value;
+  return formatPublicationDate(value);
+}
 
 export function DieselCard() {
   const state = useDieselSurcharge();
@@ -17,17 +23,17 @@ export function DieselCard() {
   }
 
   const surcharge = state.data;
+  const priceLabel = surcharge.dieselPrijs > 0 ? `dieselprijs ${formatEuro(surcharge.dieselPrijs)}` : "geen dieselprijs";
   return (
     <KpiCard
       title="Dieseltoeslag"
-      eyebrow={surcharge.note}
-      value={formatDutchPercent(surcharge.percentage)}
+      eyebrow="Asvervoer"
+      value={formatDutchPercent(surcharge.toeslagPercentage)}
       unit="%"
-      status={surcharge.status}
+      status={surcharge.actief ? "actief" : "inactief"}
       tone="gold"
-      trend={surcharge.trend}
-      delta={formatDieselChange(surcharge.changePoints)}
-      updatedLabel={`Bijgewerkt ${formatAmsterdamTime(surcharge.updatedAt)} · ${surcharge.periodLabel}`}
+      delta={priceLabel}
+      updatedLabel={`Peildatum ${formatPeildatum(surcharge.peildatum)}`}
       delay={0.12}
     />
   );
