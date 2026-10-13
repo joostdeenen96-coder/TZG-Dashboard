@@ -1,5 +1,7 @@
 export type WaterStatus = "laag" | "normaal" | "hoog";
 
+export type WaterTrend = "stijgend" | "dalend" | "gelijk";
+
 export type WaterStationId = "kaub" | "ruhrort" | "maxau";
 
 export type WaterLevelReading = {
@@ -8,13 +10,25 @@ export type WaterLevelReading = {
   river: string;
   levelCm: number;
   changeCm: number;
+  trend: WaterTrend;
   status: WaterStatus;
+  updatedAt: string;
 };
+
+export type QueryState<T> =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "empty" }
+  | { status: "ready"; data: T };
 
 export type DieselSurcharge = {
   percentage: number;
   periodLabel: string;
   note: string;
+  trend: WaterTrend;
+  changePoints: number;
+  status: string;
+  updatedAt: string;
 };
 
 export type WeatherIconName = "cloud" | "rain" | "showers" | "sun" | "sun-cloud";
@@ -50,7 +64,7 @@ export type ProjectSlide = {
   id: string;
   title: string;
   location: string;
-  image: string;
+  url: string;
   gradient: string;
   objectPosition: string;
 };

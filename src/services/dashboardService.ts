@@ -1,9 +1,13 @@
-import type { DieselSurcharge, NewsItem, ProjectSlide, WeatherReport } from "../types";
+import type { DieselSurcharge, NewsItem, ProjectSlide, QueryState, WeatherReport } from "../types";
 
 const dieselSurcharge: DieselSurcharge = {
   percentage: 12.4,
   periodLabel: "oktober 2026",
   note: "Gasolieprijs van september.",
+  trend: "stijgend",
+  changePoints: 0.2,
+  status: "geldig",
+  updatedAt: "2026-10-13T06:15:00+02:00",
 };
 
 const weather: WeatherReport = {
@@ -48,6 +52,12 @@ const newsItems: NewsItem[] = [
     summary: "De winvergunning is rond; de put gaat volgende week open.",
     publishedAt: "2026-10-11T11:00:00+02:00",
   },
+  {
+    id: "heijen",
+    title: "Grondwerk Heijen start maandag",
+    summary: "De ploeg zet het terrein uit en begint met ontgraven.",
+    publishedAt: "2026-10-10T09:30:00+02:00",
+  },
 ];
 
 const slides: ProjectSlide[] = [
@@ -55,7 +65,7 @@ const slides: ProjectSlide[] = [
     id: "zandwinning",
     title: "Zandwinning Milsbeek",
     location: "Milsbeek",
-    image: "/projects/zandwinning.jpg",
+    url: "/projects/zandwinning.jpg",
     gradient: "from-[#4a3418] via-[#1c2818] to-[#0c1410]",
     objectPosition: "center center",
   },
@@ -63,7 +73,7 @@ const slides: ProjectSlide[] = [
     id: "grondwerk",
     title: "Grondwerk bedrijventerrein",
     location: "Heijen",
-    image: "/projects/grondwerk.jpg",
+    url: "/projects/grondwerk.jpg",
     gradient: "from-[#24502c] via-[#14301c] to-[#0b140f]",
     objectPosition: "center 42%",
   },
@@ -71,7 +81,7 @@ const slides: ProjectSlide[] = [
     id: "infra",
     title: "Onderhoud N271",
     location: "Gennep — Boxmeer",
-    image: "/projects/infra.jpg",
+    url: "/projects/infra.jpg",
     gradient: "from-[#1e4a30] via-[#143024] to-[#0a120e]",
     objectPosition: "center 70%",
   },
@@ -79,7 +89,7 @@ const slides: ProjectSlide[] = [
     id: "binnenvaart",
     title: "Grindtransport Maas",
     location: "Loswal Gennep",
-    image: "/projects/binnenvaart.jpg",
+    url: "/projects/binnenvaart.jpg",
     gradient: "from-[#1a3c52] via-[#143028] to-[#0a120e]",
     objectPosition: "center 38%",
   },
@@ -87,7 +97,7 @@ const slides: ProjectSlide[] = [
     id: "oever",
     title: "Oeverwerk aan de kade",
     location: "Gennep",
-    image: "/projects/oeverwerk.jpg",
+    url: "/projects/oeverwerk.jpg",
     gradient: "from-[#2a3c4a] via-[#1a2c22] to-[#0c1210]",
     objectPosition: "center 55%",
   },
@@ -104,7 +114,34 @@ export function getWeather() {
 }
 
 export function getNews() {
-  return newsItems;
+  return newsItems.slice(0, 5);
+}
+
+function readResult<T>(load: () => T, isEmpty: (value: T) => boolean, emptyMessage: string): QueryState<T> {
+  try {
+    const data = load();
+    if (isEmpty(data)) return { status: "empty" };
+    return { status: "ready", data };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : emptyMessage;
+    return { status: "error", message };
+  }
+}
+
+export function readDiesel(): QueryState<DieselSurcharge> {
+  return readResult(getDieselSurcharge, () => false, "Dieseltoeslag niet beschikbaar.");
+}
+
+export function readWeather(): QueryState<WeatherReport> {
+  return readResult(getWeather, () => false, "Weerbericht niet beschikbaar.");
+}
+
+export function readNews(): QueryState<NewsItem[]> {
+  return readResult(getNews, (items) => items.length === 0, "Nieuws niet beschikbaar.");
+}
+
+export function readSlides(): QueryState<ProjectSlide[]> {
+  return readResult(getSlides, (items) => items.length === 0, "Projectfoto's niet beschikbaar.");
 }
 
 export function getSlides() {

@@ -47,6 +47,35 @@ export function formatRelativeDutch(iso: string, now: Date) {
   return `${days} dagen geleden`;
 }
 
+const clockFormatter = new Intl.DateTimeFormat("nl-NL", {
+  timeZone: "Europe/Amsterdam",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+export function formatAmsterdamTime(iso: string) {
+  return clockFormatter.format(new Date(iso));
+}
+
+const publicationFormatter = new Intl.DateTimeFormat("nl-NL", {
+  timeZone: "Europe/Amsterdam",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+export function formatPublicationDate(iso: string) {
+  return publicationFormatter.format(new Date(iso));
+}
+
+export function formatDieselChange(points: number) {
+  const amount = formatDutchPercent(Math.abs(points));
+  if (points < 0) return `${amount} procentpunt lager dan gisteren`;
+  if (points > 0) return `${amount} procentpunt hoger dan gisteren`;
+  return "gelijk aan gisteren";
+}
+
 export function formatWaterChange(changeCm: number) {
   if (changeCm < 0) return `${Math.abs(changeCm)} cm lager dan gisteren`;
   if (changeCm > 0) return `${changeCm} cm hoger dan gisteren`;

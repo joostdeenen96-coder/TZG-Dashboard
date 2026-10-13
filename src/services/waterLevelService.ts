@@ -1,29 +1,46 @@
 import { useSyncExternalStore } from "react";
-import type { WaterLevelReading } from "../types";
+import type { QueryState, WaterLevelReading } from "../types";
 
 const WATER_LEVELS_PATH = "/api/waterlevels";
 
-let snapshot: WaterLevelReading[] = [];
+type WaterSnapshot = QueryState<WaterLevelReading[]>;
+
+let snapshot: WaterSnapshot = { status: "loading" };
 const listeners = new Set<() => void>();
 
-function publish(next: WaterLevelReading[]) {
+function publish(next: WaterSnapshot) {
   snapshot = next;
   for (const listener of listeners) listener();
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 async function loadWaterLevels() {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  let lastError = "Waterstanden niet bereikbaar.";
+  for (let attempt = 0; attempt < 8; attempt += 1) {
     try {
       const response = await fetch(WATER_LEVELS_PATH);
       if (!response.ok) {
-        throw new Error(`Waterstanden antwoordden met ${response.status}`);
+        throw new Error(`Waterstanden antwoordden met ${response.status}.`);
       }
-      publish((await response.json()) as WaterLevelReading[]);
+      const payload: unknown = await response.json();
+      if (!Array.isArray(payload)) {
+        throw new Error("Waterstanden hebben een ongeldig formaat.");
+      }
+      if (payload.length === 0) {
+        publish({ status: "empty" });
+        return;
+      }
+      publish({ status: "ready", data: payload as WaterLevelReading[] });
       return;
-    } catch {
-      await new Promise((resolve) => window.setTimeout(resolve, 250));
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : lastError;
+      await delay(200);
     }
   }
+  publish({ status: "error", message: lastError });
 }
 
 void loadWaterLevels();
