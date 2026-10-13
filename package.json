@@ -4,26 +4,31 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "concurrently -k -n api,web \"tsx server/index.ts\" vite",
+    "server": "tsx server/index.ts",
+    "build": "tsc -b && vite build && tsc -p tsconfig.server.json",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",
     "@fontsource/source-sans-3": "^5.3.1",
+    "express": "^5.3.0",
     "lucide-react": "^1.56.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@types/express": "^5.0.6",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.6",
     "oxlint": "^1.81.0",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
   }

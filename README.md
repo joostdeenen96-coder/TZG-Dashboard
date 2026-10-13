@@ -9,9 +9,9 @@ npm install
 npm run dev
 ```
 
-De ontwikkelserver luistert op `0.0.0.0:43123`. Open [http://127.0.0.1:43123](http://127.0.0.1:43123).
+`npm run dev` start de waterstanden-API op poort `43124` en Vite op `0.0.0.0:43123`. Open [http://127.0.0.1:43123](http://127.0.0.1:43123). Alleen de API: `npm run server`.
 
-Productiebuild:
+Productiebuild (frontend en backend):
 
 ```bash
 npm run build
@@ -25,7 +25,7 @@ npm run preview
 - Weerbericht Gennep en laatste bedrijfsnieuws
 - Diavoorstelling van projecten, wisselt elke 8 seconden
 
-Waterstanden komen uit `src/services/waterLevelService.ts` (nu de mock-provider). Weer, nieuws, diesel en projectfoto’s staan in `src/services/dashboardService.ts`.
+Waterstanden komen alleen van `GET /api/waterlevels`. Weer, nieuws, diesel en projectfoto’s staan in `src/services/dashboardService.ts`.
 
 ## Foto’s
 

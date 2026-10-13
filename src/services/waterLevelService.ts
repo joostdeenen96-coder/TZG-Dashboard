@@ -1,26 +1,9 @@
 import { useSyncExternalStore } from "react";
-import type { WaterLevelProvider, WaterLevelProviderKind, WaterLevelReading } from "../types";
-import { ApiWaterLevelProvider } from "./providers/apiWaterLevelProvider";
-import { MockDataWaterLevelProvider } from "./providers/mockDataWaterLevelProvider";
-import { SharePointWaterLevelProvider } from "./providers/sharePointWaterLevelProvider";
+import type { WaterLevelReading } from "../types";
 
-/** Actieve bron. Enige plek om van provider te wisselen. */
-export const waterLevelProviderKind: WaterLevelProviderKind = "mock";
+const WATER_LEVELS_PATH = "/api/waterlevels";
 
-function createWaterLevelProvider(kind: WaterLevelProviderKind): WaterLevelProvider {
-  switch (kind) {
-    case "mock":
-      return new MockDataWaterLevelProvider();
-    case "api":
-      return new ApiWaterLevelProvider();
-    case "sharepoint":
-      return new SharePointWaterLevelProvider();
-  }
-}
-
-const provider = createWaterLevelProvider(waterLevelProviderKind);
-
-let snapshot: WaterLevelReading[] = provider.getLevels();
+let snapshot: WaterLevelReading[] = [];
 const listeners = new Set<() => void>();
 
 function publish(next: WaterLevelReading[]) {
@@ -28,18 +11,22 @@ function publish(next: WaterLevelReading[]) {
   for (const listener of listeners) listener();
 }
 
-void provider.loadLevels().then(
-  (levels) => {
-    if (levels !== snapshot) publish(levels);
-  },
-  () => {
-    // Een niet-gekoppelde provider laat de laatste snapshot staan.
-  },
-);
-
-export function getWaterLevels() {
-  return snapshot;
+async function loadWaterLevels() {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      const response = await fetch(WATER_LEVELS_PATH);
+      if (!response.ok) {
+        throw new Error(`Waterstanden antwoordden met ${response.status}`);
+      }
+      publish((await response.json()) as WaterLevelReading[]);
+      return;
+    } catch {
+      await new Promise((resolve) => window.setTimeout(resolve, 250));
+    }
+  }
 }
+
+void loadWaterLevels();
 
 export function useWaterLevels() {
   return useSyncExternalStore(
