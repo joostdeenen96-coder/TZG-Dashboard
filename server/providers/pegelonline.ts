@@ -119,13 +119,23 @@ async function readForecast(uuid: string): Promise<{ forecast: WaterForecastPoin
   }
 }
 
+export async function readPegelonlineChart(uuid: string) {
+  const historyUrl = `${PEGELONLINE_BASE}/stations/${uuid}/W/measurements.json?start=P4D`;
+  const [historyRaw, forecastResult] = await Promise.all([fetchJson(historyUrl), readForecast(uuid)]);
+  const history = asMeasurements(historyRaw);
+  return {
+    history,
+    series: thin(history, 48).map(toPoint),
+    forecast: forecastResult.forecast,
+    forecastError: forecastResult.forecast.length > 0 ? null : forecastResult.forecastError,
+  };
+}
+
 export async function readPegelonlineWater(station: { uuid: string; shortname: string }): Promise<PegelonlineReading> {
   const seriesUrl = `${PEGELONLINE_BASE}/stations/${station.uuid}/W.json?includeCurrentMeasurement=true`;
-  const historyUrl = `${PEGELONLINE_BASE}/stations/${station.uuid}/W/measurements.json?start=P4D`;
-  const [seriesRaw, historyRaw, forecastResult] = await Promise.all([
+  const [seriesRaw, chart] = await Promise.all([
     fetchJson(seriesUrl),
-    fetchJson(historyUrl),
-    readForecast(station.uuid),
+    readPegelonlineChart(station.uuid),
   ]);
   const series = asObject(seriesRaw, `Tijdreeks ${station.shortname} is ongeldig.`);
   if (series.shortname !== "W" || series.unit !== "cm") {
@@ -135,8 +145,7 @@ export async function readPegelonlineWater(station: { uuid: string; shortname: s
   if (typeof current.timestamp !== "string" || typeof current.value !== "number" || !Number.isFinite(current.value)) {
     throw new Error("Actuele waterstand is ongeldig.");
   }
-  const history = asMeasurements(historyRaw);
-  const previous = valueOneDayEarlier(history, current.timestamp);
+  const previous = valueOneDayEarlier(chart.history, current.timestamp);
   const levelCm = Math.round(current.value);
   const changeCm = levelCm - Math.round(previous);
   return {
@@ -145,9 +154,9 @@ export async function readPegelonlineWater(station: { uuid: string; shortname: s
     trend: trendFromChange(changeCm),
     status: statusFromState(current.stateMnwMhw),
     updatedAt: current.timestamp,
-    series: thin(history, 48).map(toPoint),
-    forecast: forecastResult.forecast,
-    forecastError: forecastResult.forecastError,
+    series: chart.series,
+    forecast: chart.forecast,
+    forecastError: chart.forecastError,
     graphPath: null,
   };
 }

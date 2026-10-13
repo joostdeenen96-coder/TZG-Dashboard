@@ -55,11 +55,15 @@ export type QueryState<T> =
   | { status: "empty" }
   | { status: "ready"; data: T };
 
-export type DieselSurcharge = {
+export type DieselWeek = {
   peildatum: string;
   dieselPrijs: number;
   toeslagPercentage: number;
   actief: boolean;
+};
+
+export type DieselSurcharge = DieselWeek & {
+  weken: DieselWeek[];
 };
 
 export type WeatherIconName = "cloud" | "rain" | "showers" | "sun" | "sun-cloud";

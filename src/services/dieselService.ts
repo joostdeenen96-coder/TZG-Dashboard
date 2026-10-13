@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { DieselSurcharge, QueryState } from "../types";
+import type { DieselSurcharge, DieselWeek, QueryState } from "../types";
 
 const DIESEL_PATH = "/api/dieselsurcharge";
 const REFRESH_MS = 5 * 60 * 1000;
@@ -19,6 +19,25 @@ function delay(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function mapWeek(value: unknown): DieselWeek | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  if (
+    typeof row.peildatum !== "string" ||
+    typeof row.dieselPrijs !== "number" ||
+    typeof row.toeslagPercentage !== "number" ||
+    typeof row.actief !== "boolean"
+  ) {
+    return null;
+  }
+  return {
+    peildatum: row.peildatum,
+    dieselPrijs: row.dieselPrijs,
+    toeslagPercentage: row.toeslagPercentage,
+    actief: row.actief,
+  };
+}
+
 function mapPayload(payload: unknown): DieselSurcharge | "empty" {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new Error("Dieseltoeslag heeft een ongeldig formaat.");
@@ -26,19 +45,12 @@ function mapPayload(payload: unknown): DieselSurcharge | "empty" {
   const row = payload as Record<string, unknown>;
   if (typeof row.error === "string" && row.error.trim()) throw new Error(row.error);
   if (Object.keys(row).length === 0) return "empty";
-  if (
-    typeof row.peildatum !== "string" ||
-    typeof row.dieselPrijs !== "number" ||
-    typeof row.toeslagPercentage !== "number" ||
-    typeof row.actief !== "boolean"
-  ) {
-    throw new Error("Dieseltoeslag heeft een ongeldig formaat.");
-  }
+  const current = mapWeek(row);
+  if (!current) throw new Error("Dieseltoeslag heeft een ongeldig formaat.");
+  const parsedWeeks = Array.isArray(row.weken) ? row.weken.map(mapWeek).filter((week): week is DieselWeek => week !== null) : [];
   return {
-    peildatum: row.peildatum,
-    dieselPrijs: row.dieselPrijs,
-    toeslagPercentage: row.toeslagPercentage,
-    actief: row.actief,
+    ...current,
+    weken: (parsedWeeks.length > 0 ? parsedWeeks : [current]).slice(-5),
   };
 }
 

@@ -1,5 +1,5 @@
 import { getIntegrationSettings, sharePointGraphPath } from "../services/settingsService.js";
-import type { DieselSurcharge, DieselSurchargeProvider } from "./dieselSurchargeProvider.js";
+import type { DieselSurcharge, DieselSurchargeProvider, DieselWeek } from "./dieselSurchargeProvider.js";
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
 
@@ -158,7 +158,7 @@ function readPeildatum(value: unknown) {
   return value;
 }
 
-function toSurcharge(fields: Record<string, unknown>, names: FieldNames): DieselSurcharge {
+function toSurcharge(fields: Record<string, unknown>, names: FieldNames): DieselWeek {
   return {
     peildatum: readPeildatum(fields[names.peildatum]),
     dieselPrijs: readNumber(fields[names.dieselPrijs], "Dieselprijs"),
@@ -167,13 +167,54 @@ function toSurcharge(fields: Record<string, unknown>, names: FieldNames): Diesel
   };
 }
 
-function pickActive(items: Record<string, unknown>[], names: FieldNames) {
-  const active = items
-    .map((item) => toSurcharge(asObject(item.fields, "Velden van het dieselrecord ontbreken."), names))
-    .filter((record) => record.actief);
+function isoWeekKey(peildatum: string) {
+  const time = Date.parse(peildatum);
+  if (!Number.isFinite(time)) return peildatum;
+  const date = new Date(time);
+  const utc = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const weekday = utc.getUTCDay() || 7;
+  utc.setUTCDate(utc.getUTCDate() + 4 - weekday);
+  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((utc.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+  return `${utc.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+function mapRecords(items: Record<string, unknown>[], names: FieldNames) {
+  const records: DieselWeek[] = [];
+  for (const item of items) {
+    try {
+      records.push(toSurcharge(asObject(item.fields, "Velden van het dieselrecord ontbreken."), names));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "record overgeslagen";
+      console.error(`Dieselrecord overgeslagen (${message}).`);
+    }
+  }
+  return records;
+}
+
+function pickActive(records: DieselWeek[]) {
+  const active = records.filter((record) => record.actief);
   if (active.length === 0) throw new Error("Geen record met Actief = true.");
   active.sort((left, right) => Date.parse(right.peildatum) - Date.parse(left.peildatum));
   return active[0];
+}
+
+function latestFiveWeeks(records: DieselWeek[]) {
+  const byWeek = new Map<string, DieselWeek>();
+  const chronological = [...records].sort((left, right) => Date.parse(left.peildatum) - Date.parse(right.peildatum));
+  for (const record of chronological) {
+    if (!Number.isFinite(Date.parse(record.peildatum))) continue;
+    byWeek.set(isoWeekKey(record.peildatum), record);
+  }
+  return [...byWeek.values()]
+    .sort((left, right) => Date.parse(right.peildatum) - Date.parse(left.peildatum))
+    .slice(0, 5)
+    .sort((left, right) => Date.parse(left.peildatum) - Date.parse(right.peildatum));
+}
+
+function withWeeks(active: DieselWeek, records: DieselWeek[]): DieselSurcharge {
+  const weken = latestFiveWeeks(records);
+  return { ...active, weken: weken.length > 0 ? weken : [{ ...active }] };
 }
 
 async function openActiveList() {
@@ -213,24 +254,29 @@ export class SharePointDieselProvider implements DieselSurchargeProvider {
       toeslagPercentage: columnName(columns, ["toeslagpercentage", "toeslag"]),
     };
 
-    const filtered = graphUrl(`/sites/${site.id}/lists/${list.id}/items`, {
+    const itemQuery = {
       $expand: "fields",
       $top: "100",
-      $filter: `fields/${names.actief} eq true`,
-    });
+    };
     let items: Record<string, unknown>[];
     try {
-      items = await graphList(filtered);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "filter mislukt";
-      console.error(`Actief-filter op ${listName} mislukt (${message}). Alle items worden lokaal gefilterd.`);
       items = await graphList(
-        graphUrl(`/sites/${site.id}/lists/${list.id}/items`, { $expand: "fields", $top: "100" }),
+        graphUrl(`/sites/${site.id}/lists/${list.id}/items`, {
+          ...itemQuery,
+          $orderby: `fields/${names.peildatum} desc`,
+        }),
       );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "sortering mislukt";
+      console.error(`Sortering op ${listName} mislukt (${message}). Items worden lokaal gesorteerd.`);
+      items = await graphList(graphUrl(`/sites/${site.id}/lists/${list.id}/items`, itemQuery));
     }
 
-    const record = pickActive(items, names);
-    console.info(`Actief dieselrecord uit SharePoint, peildatum ${record.peildatum}.`);
+    const records = mapRecords(items, names);
+    const record = withWeeks(pickActive(records), records);
+    console.info(
+      `Actief dieselrecord uit SharePoint, peildatum ${record.peildatum}, ${record.weken.length} weekregels.`,
+    );
     return record;
   }
 }

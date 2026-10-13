@@ -38,7 +38,7 @@ Het scherm is opgezet voor 2560×1440 en schaalt naar het venster. De browser pr
 | `series` | Uitgedunde meetreeks van de laatste vier dagen, `{ timestamp, levelCm }` |
 | `forecast` | PEGELONLINE-tijdreeks `WV`: `kind` is `verwacht` of `inschatting` |
 | `forecastError` | `null` als de verwachting geladen is, anders een tekst. De actuele stand blijft staan |
-| `graphPath` | Alleen Maxau: `/api/waterlevels/maxau/graph`, de GIF die HVZ zelf toont |
+| `graphPath` | `null`. De kaarten tekenen zelf de donkere grafiek uit `series` en `forecast` |
 | `error` | `null` bij een geslaagde meting, anders een tekst en lege getallen |
 
 `useWaterLevels()` in `src/services/waterLevelService.ts` leest alleen `/api/waterlevels` en zet het object om naar de drie kaarten. Een station met `error` toont de fout op die kaart.
@@ -85,7 +85,7 @@ De publieke dataset die de HVZ-site zelf ververst, bestaat uit twee gestructuree
 
 `changeCm` is de actuele centimeter minus die dagwaarde. De dagwaarde moet op de kalenderdag vóór de meting staan. Status volgt dezelfde grenzen als PEGELONLINE: op of onder MNW is `laag`, op of boven de laagste hoogwaterstand is `hoog`, daartussen `normaal`. Ontbreekt een van die getallen, of staat de waterstand niet in centimeter, dan faalt Maxau.
 
-De kaart toont de grafiek die HVZ zelf publiceert: `https://www.hvz.baden-wuerttemberg.de/gifs/09016-2001.GIF` (meting, verwachting en inschatting). De browser haalt die op via `GET /api/waterlevels/maxau/graph`. PEGELONLINE heeft voor Maxau geen tijdreeks `WV`.
+De kaart tekent dezelfde donkere grafiek als Kaub en Ruhrort. De lijn komt uit de PEGELONLINE-tijdreeks `W` van station `b6c6d5c8-e2d5-4469-8dd8-fa972ef7eaea`, de laatste vier dagen, uitgedund tot 48 punten. De actuele centimeter, status en daggemiddelde blijven van HVZ. PEGELONLINE heeft voor Maxau geen tijdreeks `WV`, dus de kaart toont geen verwachtingscijfers en geen fouttekst daarover. Faalt de reeks, dan blijft de HVZ-stand staan en is `series` leeg.
 
 ## Dieseltoeslag
 
@@ -95,11 +95,11 @@ De kaart toont de grafiek die HVZ zelf publiceert: `https://www.hvz.baden-wuertt
 const activeDieselSource: DieselSource = "sharepoint";
 ```
 
-`SharePointDieselProvider` leest via Microsoft Graph de site en de lijst uit de beheerinstellingen. Standaard is dat `https://teunesen.sharepoint.com/sites/Facturatie` en `Dieseltoeslagen Asvervoer`. Het record met `Actief = true` is de actuele toeslag. Bij meerdere actieve records wint de laatste peildatum.
+`SharePointDieselProvider` leest via Microsoft Graph de site en de lijst uit de beheerinstellingen. Standaard is dat `https://teunesen.sharepoint.com/sites/Facturatie` en `Dieseltoeslagen Asvervoer`. Het record met `Actief = true` is de actuele toeslag. Bij meerdere actieve records wint de laatste peildatum. `weken` bevat hoogstens de laatste vijf ISO-weken uit de lijst, chronologisch, één record per week (de laatste peildatum in die week). Ontbreken er weken, dan blijven die weg. Er worden geen percentages bijverzonnen.
 
 Rechtsboven opent **Inloggen** het beheer. Eerste aanmelding is `admin` / `teunesen`. De tenant, client-id, client secret, site en lijst worden lokaal in `data/settings.json` gezet en niet in de repository. Omgevingsvariabelen `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID` en `GRAPH_CLIENT_SECRET` vullen lege velden nog aan. **Verbinding testen** controleert of Graph de lijst vindt.
 
-Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record), dan logt de service de fout en valt terug op `MockDieselProvider`. Die fallback blijft de laatste lokale cijfers: peildatum 2026-10-13, toeslag 12,4 procent, actief. Er is geen dieselprijs in die fallback (`dieselPrijs` is 0).
+Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record), dan logt de service de fout en valt terug op `MockDieselProvider`. Die fallback blijft de laatste lokale cijfers: peildatum 2026-10-13, toeslag 12,4 procent, actief. Er is geen dieselprijs in die fallback (`dieselPrijs` is 0). `weken` bevat dan alleen die ene bekende week.
 
 `GET /api/dieselsurcharge` geeft:
 
@@ -108,7 +108,15 @@ Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record), 
   "peildatum": "2026-10-13",
   "dieselPrijs": 0,
   "toeslagPercentage": 12.4,
-  "actief": true
+  "actief": true,
+  "weken": [
+    {
+      "peildatum": "2026-10-13",
+      "dieselPrijs": 0,
+      "toeslagPercentage": 12.4,
+      "actief": true
+    }
+  ]
 }
 ```
 

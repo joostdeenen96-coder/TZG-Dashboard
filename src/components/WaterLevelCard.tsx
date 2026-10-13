@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 import { formatAmsterdamTime, formatWaterChange } from "../lib/format";
 import type { WaterForecastPoint, WaterStationResult, WaterStatus, WaterTrend } from "../types";
@@ -40,7 +39,6 @@ function dailyForecast(points: WaterForecastPoint[]) {
 }
 
 export function WaterLevelCard({ station }: WaterLevelCardProps) {
-  const [graphFailed, setGraphFailed] = useState(false);
   if (!isReady(station)) {
     return <CardState status="error" title={station.name} message={station.error ?? "Peil niet beschikbaar."} />;
   }
@@ -75,16 +73,7 @@ export function WaterLevelCard({ station }: WaterLevelCardProps) {
         </p>
       </div>
       <div className="mt-2 min-h-0 flex-1">
-        {station.graphPath && !graphFailed ? (
-          <img
-            src={station.graphPath}
-            alt={`Verwachtingsgrafiek ${station.name}`}
-            className="h-full w-full rounded-lg bg-white object-contain"
-            onError={() => setGraphFailed(true)}
-          />
-        ) : (
-          <WaterChart series={station.series} forecast={station.forecast} />
-        )}
+        <WaterChart series={station.series} forecast={station.forecast} />
       </div>
       {days.length > 0 ? (
         <ul className="mt-2 grid grid-cols-5 gap-1">
@@ -98,7 +87,6 @@ export function WaterLevelCard({ station }: WaterLevelCardProps) {
         </ul>
       ) : null}
       {station.forecastError ? <p className="mt-1 truncate text-[13px] text-mist">{station.forecastError}</p> : null}
-      {graphFailed ? <p className="mt-1 text-[13px] text-mist">Bron-grafiek niet geladen.</p> : null}
       <p className="mt-1 truncate text-[13px] text-mist">
         Bijgewerkt {formatAmsterdamTime(station.updatedAt)} · {station.source}
       </p>
