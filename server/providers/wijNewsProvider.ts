@@ -1,8 +1,7 @@
+import { getDashboardConfig, GRAPH_TENANT_ID } from "../services/dashboardConfig.js";
 import { getIntegrationSettings, sharePointGraphPath } from "../services/settingsService.js";
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
-const NEWS_SITE = "https://teunesen.sharepoint.com/sites/wt-nieuws";
-const SITE_PATH = "/sites/wt-nieuws";
 
 export type WijNewsItem = {
   id: string;
@@ -42,10 +41,11 @@ async function graphError(response: Response) {
 
 async function accessToken() {
   const { graph } = getIntegrationSettings();
-  if (!graph.tenantId || !graph.clientId || !graph.clientSecret) {
-    throw new Error("Graph-gegevens ontbreken. Vul ze in via Instellingen.");
+  const tenantId = graph.tenantId || GRAPH_TENANT_ID;
+  if (!graph.clientId || !graph.clientSecret) {
+    throw new Error("Graph client-id of client secret ontbreekt.");
   }
-  const key = `${graph.tenantId}:${graph.clientId}:${graph.clientSecret}`;
+  const key = `${tenantId}:${graph.clientId}:${graph.clientSecret}`;
   if (tokenCache && tokenCache.key === key && tokenCache.expiresAt > Date.now() + 60_000) return tokenCache.accessToken;
   const body = new URLSearchParams({
     client_id: graph.clientId,
@@ -55,7 +55,7 @@ async function accessToken() {
   });
   let response: Response;
   try {
-    response = await fetch(`https://login.microsoftonline.com/${graph.tenantId}/oauth2/v2.0/token`, {
+    response = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body,
@@ -119,19 +119,47 @@ function plainText(value: unknown) {
     .slice(0, 180);
 }
 
-function isWijNews(item: Record<string, unknown>) {
+function odataText(value: string) {
+  return value.replaceAll("'", "''");
+}
+
+function isWijNews(item: Record<string, unknown>, siteUrl: string) {
   if (item.promotionKind !== "newsPost") return false;
   if (typeof item.title !== "string" || !item.title.trim()) return false;
+  const sitePath = new URL(siteUrl).pathname.replace(/\/$/, "").toLowerCase();
   if (typeof item.webUrl === "string") {
     try {
       const url = new URL(item.webUrl);
-      if (url.hostname !== "teunesen.sharepoint.com") return false;
-      if (!url.pathname.toLowerCase().startsWith(SITE_PATH)) return false;
+      if (url.hostname !== new URL(siteUrl).hostname) return false;
+      if (!url.pathname.toLowerCase().startsWith(sitePath)) return false;
     } catch {
       return false;
     }
   }
   return true;
+}
+
+async function openNewsLibrary(siteUrl: string, bibliotheek: string) {
+  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(siteUrl))), "Nieuwssite is ongeldig.");
+  if (typeof site.id !== "string") throw new Error("Nieuwssite niet gevonden.");
+  const lists = await graphList(
+    graphUrl(`/sites/${site.id}/lists`, {
+      $select: "id,displayName",
+      $filter: `displayName eq '${odataText(bibliotheek)}'`,
+    }),
+  );
+  const library = lists.find((item) => item.displayName === bibliotheek);
+  if (!library || typeof library.id !== "string") throw new Error(`Bibliotheek ${bibliotheek} niet gevonden.`);
+  return { siteId: site.id, libraryName: bibliotheek };
+}
+
+export async function testNewsLibrary(siteUrl?: string, bibliotheek?: string) {
+  const config = getDashboardConfig();
+  const found = await openNewsLibrary(
+    siteUrl ?? config.sharepointNieuws.siteUrl,
+    bibliotheek ?? config.sharepointNieuws.bibliotheek,
+  );
+  return `Nieuws: bibliotheek ${found.libraryName} gevonden.`;
 }
 
 function toItem(item: Record<string, unknown>): WijNewsItem {
@@ -148,7 +176,9 @@ function toItem(item: Record<string, unknown>): WijNewsItem {
 }
 
 export async function readWijNews(): Promise<WijNewsItem[]> {
-  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(NEWS_SITE))), "WijTeunesen-site is ongeldig.");
+  const config = getDashboardConfig();
+  const siteUrl = config.sharepointNieuws.siteUrl;
+  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(siteUrl))), "WijTeunesen-site is ongeldig.");
   if (typeof site.id !== "string") throw new Error("WijTeunesen-site niet gevonden.");
   let pages: Record<string, unknown>[];
   try {
@@ -161,10 +191,12 @@ export async function readWijNews(): Promise<WijNewsItem[]> {
     pages = await graphList(graphUrl(`/sites/${site.id}/pages`, { $top: "25" }));
   }
   return pages
-    .filter(isWijNews)
+    .filter((item) => isWijNews(item, siteUrl))
     .map(toItem)
     .sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt))
-    .slice(0, 5);
+    .slice(0, config.dashboard.aantalNieuwsitems);
 }
 
-export const wijNewsSite = NEWS_SITE;
+export function currentNewsSite() {
+  return getDashboardConfig().sharepointNieuws.siteUrl;
+}

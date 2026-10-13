@@ -10,8 +10,9 @@ import type {
   WaterTrend,
 } from "../types";
 
+import { getRefreshMs } from "./dashboardConfigService";
+
 const WATER_LEVELS_PATH = "/api/waterlevels";
-const REFRESH_MS = 5 * 60 * 1000;
 
 const stationNames: Record<WaterStationId, string> = {
   kaub: "Kaub",
@@ -159,9 +160,12 @@ async function loadWaterLevels() {
 
 function ensureRefresh() {
   if (refreshTimer) return;
-  refreshTimer = window.setInterval(() => {
-    void loadWaterLevels();
-  }, REFRESH_MS);
+  const tick = () => {
+    refreshTimer = window.setTimeout(() => {
+      void loadWaterLevels().finally(tick);
+    }, getRefreshMs());
+  };
+  tick();
 }
 
 void loadWaterLevels();

@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from "react";
 import type { QueryState, WijNewsItem, WijNewsResponse } from "../types";
 
+import { getRefreshMs } from "./dashboardConfigService";
+
 const NEWS_PATH = "/api/news";
-const REFRESH_MS = 5 * 60 * 1000;
 
 type NewsSnapshot = QueryState<WijNewsResponse>;
 
@@ -69,9 +70,12 @@ async function loadNews() {
 
 function ensureRefresh() {
   if (refreshTimer) return;
-  refreshTimer = window.setInterval(() => {
-    void loadNews();
-  }, REFRESH_MS);
+  const tick = () => {
+    refreshTimer = window.setTimeout(() => {
+      void loadNews().finally(tick);
+    }, getRefreshMs());
+  };
+  tick();
 }
 
 void loadNews();

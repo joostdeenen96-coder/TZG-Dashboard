@@ -98,6 +98,82 @@ export async function saveSettings(input: {
   return (await response.json()) as PublicSettings;
 }
 
+export type DashboardConfig = {
+  sharepointDiesel: {
+    siteUrl: string;
+    lijstnaam: string;
+  };
+  sharepointNieuws: {
+    siteUrl: string;
+    bibliotheek: string;
+  };
+  weer: {
+    plaatsnaam: string;
+  };
+  dashboard: {
+    refreshInterval: number;
+    aantalNieuwsitems: number;
+  };
+};
+
+function isDashboardConfig(value: unknown): value is DashboardConfig {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Record<string, unknown>;
+  const diesel = row.sharepointDiesel;
+  const nieuws = row.sharepointNieuws;
+  const weer = row.weer;
+  const dashboard = row.dashboard;
+  if (!diesel || typeof diesel !== "object" || !nieuws || typeof nieuws !== "object") return false;
+  if (!weer || typeof weer !== "object" || !dashboard || typeof dashboard !== "object") return false;
+  const dieselRow = diesel as Record<string, unknown>;
+  const nieuwsRow = nieuws as Record<string, unknown>;
+  const weerRow = weer as Record<string, unknown>;
+  const dashboardRow = dashboard as Record<string, unknown>;
+  return (
+    typeof dieselRow.siteUrl === "string" &&
+    typeof dieselRow.lijstnaam === "string" &&
+    typeof nieuwsRow.siteUrl === "string" &&
+    typeof nieuwsRow.bibliotheek === "string" &&
+    typeof weerRow.plaatsnaam === "string" &&
+    typeof dashboardRow.refreshInterval === "number" &&
+    typeof dashboardRow.aantalNieuwsitems === "number"
+  );
+}
+
+export async function fetchDashboardConfig() {
+  const response = await fetch("/api/admin/config", { headers: authHeaders() });
+  if (!response.ok) throw new Error(await readError(response));
+  const payload: unknown = await response.json();
+  if (!isDashboardConfig(payload)) throw new Error("Instellingen hebben een ongeldig formaat.");
+  return payload;
+}
+
+export async function saveDashboardConfig(config: DashboardConfig) {
+  const response = await fetch("/api/admin/config", {
+    method: "PUT",
+    headers: { "content-type": "application/json", ...authHeaders() },
+    body: JSON.stringify(config),
+  });
+  if (!response.ok) throw new Error(await readError(response));
+  const payload: unknown = await response.json();
+  if (!isDashboardConfig(payload)) throw new Error("Instellingen hebben een ongeldig formaat.");
+  return payload;
+}
+
+export async function testDashboardConnection(config: DashboardConfig) {
+  const response = await fetch("/api/admin/test", {
+    method: "POST",
+    headers: { "content-type": "application/json", ...authHeaders() },
+    body: JSON.stringify(config),
+  });
+  if (!response.ok) throw new Error(await readError(response));
+  const payload: unknown = await response.json();
+  if (!payload || typeof payload !== "object" || !("message" in payload) || typeof payload.message !== "string") {
+    throw new Error("Test gaf geen resultaat.");
+  }
+  return payload.message;
+}
+
 export async function testAdminConnection() {
   const response = await fetch("/api/admin/test", { method: "POST", headers: authHeaders() });
   if (!response.ok) throw new Error(await readError(response));

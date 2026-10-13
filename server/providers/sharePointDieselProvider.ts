@@ -1,10 +1,8 @@
+import { getDashboardConfig, GRAPH_TENANT_ID } from "../services/dashboardConfig.js";
 import { getIntegrationSettings, sharePointGraphPath } from "../services/settingsService.js";
 import type { DieselSurcharge, DieselSurchargeProvider, DieselWeek } from "./dieselSurchargeProvider.js";
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
-const DIESEL_SITE_URL = "https://teunesen.sharepoint.com/sites/Facturatie";
-const DIESEL_LIST_NAME = "Dieseltoeslagen Asvervoer";
-const DIESEL_TENANT_ID = "ca0e0118-1eb1-4661-bd22-8ca64479f1d3";
 
 type TokenCache = {
   accessToken: string;
@@ -35,7 +33,7 @@ function graphCredentials() {
     throw new Error("Graph client-id of client secret ontbreekt.");
   }
   return {
-    tenantId: DIESEL_TENANT_ID,
+    tenantId: GRAPH_TENANT_ID,
     clientId: graph.clientId,
     clientSecret: graph.clientSecret,
   };
@@ -224,23 +222,30 @@ function withWeeks(active: DieselWeek, records: DieselWeek[]): DieselSurcharge {
   return { ...active, weken: weken.length > 0 ? weken : [{ ...active }] };
 }
 
-async function openActiveList() {
-  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(DIESEL_SITE_URL))), "SharePoint-site is ongeldig.");
+function odataText(value: string) {
+  return value.replaceAll("'", "''");
+}
+
+async function openActiveList(siteUrl?: string, listName?: string) {
+  const config = getDashboardConfig();
+  const siteAddress = siteUrl ?? config.sharepointDiesel.siteUrl;
+  const name = listName ?? config.sharepointDiesel.lijstnaam;
+  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(siteAddress))), "SharePoint-site is ongeldig.");
   if (typeof site.id !== "string") throw new Error("SharePoint-site niet gevonden.");
   const lists = await graphList(
     graphUrl(`/sites/${site.id}/lists`, {
       $select: "id,displayName",
-      $filter: `displayName eq '${DIESEL_LIST_NAME}'`,
+      $filter: `displayName eq '${odataText(name)}'`,
     }),
   );
-  const list = lists.find((item) => item.displayName === DIESEL_LIST_NAME);
-  if (!list || typeof list.id !== "string") throw new Error(`Lijst ${DIESEL_LIST_NAME} niet gevonden.`);
-  return { siteId: site.id, listId: list.id, listName: DIESEL_LIST_NAME };
+  const list = lists.find((item) => item.displayName === name);
+  if (!list || typeof list.id !== "string") throw new Error(`Lijst ${name} niet gevonden.`);
+  return { siteId: site.id, listId: list.id, listName: name };
 }
 
-export async function testSharePointConnection() {
-  const { siteId, listName } = await openActiveList();
-  return `Verbonden met ${listName} op site ${siteId.split(",")[0] ?? siteId}.`;
+export async function testSharePointConnection(siteUrl?: string, listName?: string) {
+  const found = await openActiveList(siteUrl, listName);
+  return `Dieseltoeslag: lijst ${found.listName} gevonden.`;
 }
 
 export class SharePointDieselProvider implements DieselSurchargeProvider {

@@ -1,6 +1,7 @@
 import { Newspaper } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatPublicationDate } from "../lib/format";
+import { useScreenConfig } from "../services/dashboardConfigService";
 import { useWijNews } from "../services/newsService";
 import type { WijNewsItem } from "../types";
 import { CardState } from "./CardState";
@@ -42,6 +43,7 @@ function Preview({ item, sample }: { item: WijNewsItem; sample: boolean }) {
 }
 
 export function NewsCard() {
+  const count = useScreenConfig().dashboard.aantalNieuwsitems;
   const state = useWijNews();
   if (state.status === "error") {
     return <CardState status="error" title="WijTeunesen" message={state.message} />;
@@ -51,7 +53,7 @@ export function NewsCard() {
   }
 
   const live = state.data.connected && state.data.items.length > 0;
-  const shown = live ? state.data.items.slice(0, 3) : previews;
+  const shown = (live ? state.data.items : previews).slice(0, count);
 
   return (
     <motion.article
@@ -72,7 +74,10 @@ export function NewsCard() {
         </div>
       </div>
       {state.data.error ? <p className="mt-2 text-[14px] text-mist">{state.data.error}</p> : null}
-      <ul className="mt-3 grid min-h-0 flex-1 grid-rows-3 gap-2">
+      <ul
+        className="mt-3 grid min-h-0 flex-1 gap-2"
+        style={{ gridTemplateRows: `repeat(${Math.max(shown.length, 1)}, minmax(0, 1fr))` }}
+      >
         {shown.map((item) => (
           <Preview key={item.id} item={item} sample={!live} />
         ))}

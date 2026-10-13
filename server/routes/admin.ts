@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { resetGraphCache, testSharePointConnection } from "../providers/sharePointDieselProvider.js";
-import { resetWijNewsCache } from "../providers/wijNewsProvider.js";
+import { resetWijNewsCache, testNewsLibrary } from "../providers/wijNewsProvider.js";
 import {
   clearLoginFailures,
   createSession,
@@ -10,6 +10,7 @@ import {
   readSession,
   tokenFromHeader,
 } from "../services/adminSession.js";
+import { getDashboardConfig, parseDashboardConfig, saveDashboardConfig } from "../services/dashboardConfig.js";
 import { checkAdminLogin, getPublicSettings, updateSettings } from "../services/settingsService.js";
 
 export const adminRouter = Router();
@@ -76,14 +77,53 @@ adminRouter.put("/settings", (req, res) => {
   }
 });
 
+adminRouter.get("/config", (req, res) => {
+  if (!requireAdmin(req.header("authorization"))) {
+    res.status(401).json({ error: "Niet aangemeld." });
+    return;
+  }
+  res.json(getDashboardConfig());
+});
+
+adminRouter.put("/config", (req, res) => {
+  if (!requireAdmin(req.header("authorization"))) {
+    res.status(401).json({ error: "Niet aangemeld." });
+    return;
+  }
+  try {
+    const config = saveDashboardConfig(req.body);
+    resetGraphCache();
+    resetWijNewsCache();
+    res.json(config);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Instellingen niet opgeslagen.";
+    res.status(400).json({ error: message });
+  }
+});
+
 adminRouter.post("/test", async (req, res) => {
   if (!requireAdmin(req.header("authorization"))) {
     res.status(401).json({ error: "Niet aangemeld." });
     return;
   }
   try {
-    const message = await testSharePointConnection();
-    res.json({ ok: true, message });
+    const body = req.body ?? {};
+    const hasForm =
+      body &&
+      typeof body === "object" &&
+      ("sharepointDiesel" in body || "sharepointNieuws" in body);
+    const current = getDashboardConfig();
+    const config = hasForm
+      ? parseDashboardConfig({
+          sharepointDiesel: body.sharepointDiesel ?? current.sharepointDiesel,
+          sharepointNieuws: body.sharepointNieuws ?? current.sharepointNieuws,
+          weer: body.weer ?? current.weer,
+          dashboard: body.dashboard ?? current.dashboard,
+        })
+      : current;
+    const diesel = await testSharePointConnection(config.sharepointDiesel.siteUrl, config.sharepointDiesel.lijstnaam);
+    const nieuws = await testNewsLibrary(config.sharepointNieuws.siteUrl, config.sharepointNieuws.bibliotheek);
+    res.json({ ok: true, message: `${diesel} ${nieuws}` });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Verbinding mislukt.";
     console.error(`Graph-test mislukt: ${message}`);

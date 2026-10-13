@@ -1,6 +1,7 @@
 import { Cloud, CloudDrizzle, CloudRain, CloudSun, MapPin, Sun, Wind } from "lucide-react";
 import { motion } from "framer-motion";
 import { readWeather } from "../services/dashboardService";
+import { useScreenConfig } from "../services/dashboardConfigService";
 import type { WeatherIconName } from "../types";
 import { CardState } from "./CardState";
 
@@ -13,6 +14,7 @@ const icons = {
 } satisfies Record<WeatherIconName, typeof Cloud>;
 
 export function WeatherCard() {
+  const plaatsnaam = useScreenConfig().weer.plaatsnaam;
   const state = readWeather();
   if (state.status === "error") {
     return <CardState status="error" title="Weerbericht" message={state.message} />;
@@ -43,7 +45,7 @@ export function WeatherCard() {
         </div>
         <p className="flex items-center gap-2 text-[18px] font-medium">
           <MapPin className="h-4 w-4 text-gold" strokeWidth={2.3} />
-          {weather.location}
+          {plaatsnaam || weather.location}
         </p>
       </div>
       <div className="mt-4 flex min-h-0 flex-1 items-center gap-10">

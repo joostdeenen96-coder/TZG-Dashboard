@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from "react";
 import type { DieselSurcharge, DieselWeek, QueryState } from "../types";
 
+import { getRefreshMs } from "./dashboardConfigService";
+
 const DIESEL_PATH = "/api/dieselsurcharge";
-const REFRESH_MS = 5 * 60 * 1000;
 
 type DieselSnapshot = QueryState<DieselSurcharge>;
 
@@ -83,9 +84,12 @@ async function loadDiesel() {
 
 function ensureRefresh() {
   if (refreshTimer) return;
-  refreshTimer = window.setInterval(() => {
-    void loadDiesel();
-  }, REFRESH_MS);
+  const tick = () => {
+    refreshTimer = window.setTimeout(() => {
+      void loadDiesel().finally(tick);
+    }, getRefreshMs());
+  };
+  tick();
 }
 
 void loadDiesel();

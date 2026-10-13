@@ -95,7 +95,7 @@ De kaart tekent dezelfde donkere grafiek als Kaub en Ruhrort. De lijn komt uit d
 const activeDieselSource: DieselSource = "sharepoint";
 ```
 
-`SharePointDieselProvider` leest vast de lijst `Dieseltoeslagen Asvervoer` op `https://teunesen.sharepoint.com/sites/Facturatie`. Die site, lijstnaam en tenant staan in de provider, niet in een beheerformulier. Het record met `Actief = true` is de actuele toeslag. Bij meerdere actieve records wint de laatste peildatum. `weken` bevat hoogstens de laatste vijf ISO-weken uit de lijst, chronologisch, één record per week (de laatste peildatum in die week). Ontbreken er weken, dan blijven die weg. Er worden geen percentages bijverzonnen.
+`SharePointDieselProvider` leest de lijst uit `config.json`: standaard `Dieseltoeslagen Asvervoer` op `https://teunesen.sharepoint.com/sites/Facturatie`. Die waarden wijzigt het verborgen beheer op `/admin`. De tenant blijft `ca0e0118-1eb1-4661-bd22-8ca64479f1d3`. Het record met `Actief = true` is de actuele toeslag. Bij meerdere actieve records wint de laatste peildatum. `weken` bevat hoogstens de laatste vijf ISO-weken uit de lijst, chronologisch, één record per week (de laatste peildatum in die week). Ontbreken er weken, dan blijven die weg. Er worden geen percentages bijverzonnen.
 
 De dieselkaart gebruikt die vaste lijst. Client-id en client secret komen uit `GRAPH_CLIENT_ID` en `GRAPH_CLIENT_SECRET`, of uit `data/settings.json` als die er al staan. Zonder die twee waarden kan Graph de lijst niet lezen. De tenant voor deze lijst is `ca0e0118-1eb1-4661-bd22-8ca64479f1d3`.
 
