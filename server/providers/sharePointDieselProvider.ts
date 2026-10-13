@@ -1,8 +1,7 @@
+import { getIntegrationSettings, sharePointGraphPath } from "../services/settingsService.js";
 import type { DieselSurcharge, DieselSurchargeProvider } from "./dieselSurchargeProvider.js";
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
-const SITE_PATH = "/sites/teunesen.sharepoint.com:/sites/Facturatie";
-const LIST_NAME = "Dieseltoeslagen Asvervoer";
 
 type TokenCache = {
   accessToken: string;
@@ -21,12 +20,18 @@ type FieldNames = {
   toeslagPercentage: string;
 };
 
-let tokenCache: TokenCache | null = null;
+let tokenCache: (TokenCache & { key: string }) | null = null;
 
-function envValue(name: string) {
-  const value = process.env[name]?.trim();
-  if (!value) throw new Error(`${name} ontbreekt.`);
-  return value;
+export function resetGraphCache() {
+  tokenCache = null;
+}
+
+function graphCredentials() {
+  const { graph } = getIntegrationSettings();
+  if (!graph.tenantId || !graph.clientId || !graph.clientSecret) {
+    throw new Error("Graph-gegevens ontbreken. Vul ze in via Instellingen.");
+  }
+  return graph;
 }
 
 function asObject(value: unknown, message: string) {
@@ -51,16 +56,18 @@ async function graphError(response: Response) {
 }
 
 async function accessToken() {
-  if (tokenCache && tokenCache.expiresAt > Date.now() + 60_000) return tokenCache.accessToken;
+  const graph = graphCredentials();
+  const key = `${graph.tenantId}:${graph.clientId}:${graph.clientSecret}`;
+  if (tokenCache && tokenCache.key === key && tokenCache.expiresAt > Date.now() + 60_000) return tokenCache.accessToken;
   const body = new URLSearchParams({
-    client_id: envValue("GRAPH_CLIENT_ID"),
-    client_secret: envValue("GRAPH_CLIENT_SECRET"),
+    client_id: graph.clientId,
+    client_secret: graph.clientSecret,
     scope: "https://graph.microsoft.com/.default",
     grant_type: "client_credentials",
   });
   let response: Response;
   try {
-    response = await fetch(`https://login.microsoftonline.com/${envValue("GRAPH_TENANT_ID")}/oauth2/v2.0/token`, {
+    response = await fetch(`https://login.microsoftonline.com/${graph.tenantId}/oauth2/v2.0/token`, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body,
@@ -75,6 +82,7 @@ async function accessToken() {
     throw new Error("Graph-token is ongeldig.");
   }
   tokenCache = {
+    key,
     accessToken: payload.access_token,
     expiresAt: Date.now() + payload.expires_in * 1000,
   };
@@ -129,7 +137,7 @@ function columnName(columns: GraphColumn[], keys: string[]) {
     );
     if (found) return found.name;
   }
-  throw new Error(`Kolom ${keys[0]} ontbreekt in ${LIST_NAME}.`);
+  throw new Error(`Kolom ${keys[0]} ontbreekt in de lijst.`);
 }
 
 function readNumber(value: unknown, label: string) {
@@ -168,18 +176,31 @@ function pickActive(items: Record<string, unknown>[], names: FieldNames) {
   return active[0];
 }
 
+async function openActiveList() {
+  const { sharepoint } = getIntegrationSettings();
+  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(sharepoint.siteUrl))), "SharePoint-site is ongeldig.");
+  if (typeof site.id !== "string") throw new Error("SharePoint-site niet gevonden.");
+  const lists = await graphList(
+    graphUrl(`/sites/${site.id}/lists`, {
+      $select: "id,displayName",
+      $filter: `displayName eq '${sharepoint.listName}'`,
+    }),
+  );
+  const list = lists.find((item) => item.displayName === sharepoint.listName);
+  if (!list || typeof list.id !== "string") throw new Error(`Lijst ${sharepoint.listName} niet gevonden.`);
+  return { siteId: site.id, listId: list.id, listName: sharepoint.listName };
+}
+
+export async function testSharePointConnection() {
+  const { siteId, listName } = await openActiveList();
+  return `Verbonden met ${listName} op site ${siteId.split(",")[0] ?? siteId}.`;
+}
+
 export class SharePointDieselProvider implements DieselSurchargeProvider {
   async getCurrentData(): Promise<DieselSurcharge> {
-    const site = asObject(await graphFetch(graphUrl(SITE_PATH)), "SharePoint-site is ongeldig.");
-    if (typeof site.id !== "string") throw new Error("SharePoint-site niet gevonden.");
-    const lists = await graphList(
-      graphUrl(`/sites/${site.id}/lists`, {
-        $select: "id,displayName",
-        $filter: `displayName eq '${LIST_NAME}'`,
-      }),
-    );
-    const list = lists.find((item) => item.displayName === LIST_NAME);
-    if (!list || typeof list.id !== "string") throw new Error(`Lijst ${LIST_NAME} niet gevonden.`);
+    const { siteId, listId, listName } = await openActiveList();
+    const site = { id: siteId };
+    const list = { id: listId };
 
     const columns = (await graphList(
       graphUrl(`/sites/${site.id}/lists/${list.id}/columns`, { $select: "name,displayName", $top: "200" }),
@@ -202,7 +223,7 @@ export class SharePointDieselProvider implements DieselSurchargeProvider {
       items = await graphList(filtered);
     } catch (error) {
       const message = error instanceof Error ? error.message : "filter mislukt";
-      console.error(`Actief-filter op ${LIST_NAME} mislukt (${message}). Alle items worden lokaal gefilterd.`);
+      console.error(`Actief-filter op ${listName} mislukt (${message}). Alle items worden lokaal gefilterd.`);
       items = await graphList(
         graphUrl(`/sites/${site.id}/lists/${list.id}/items`, { $expand: "fields", $top: "100" }),
       );

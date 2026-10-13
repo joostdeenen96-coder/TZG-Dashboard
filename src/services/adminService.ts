@@ -1,0 +1,122 @@
+import { useSyncExternalStore } from "react";
+
+const TOKEN_KEY = "teunesen-admin-token";
+
+export type PublicSettings = {
+  graph: {
+    tenantId: string;
+    clientId: string;
+    clientSecretSet: boolean;
+  };
+  sharepoint: {
+    siteUrl: string;
+    listName: string;
+  };
+};
+
+let authenticated = false;
+const listeners = new Set<() => void>();
+
+function publish(next: boolean) {
+  authenticated = next;
+  for (const listener of listeners) listener();
+}
+
+function token() {
+  return sessionStorage.getItem(TOKEN_KEY);
+}
+
+function authHeaders(): Record<string, string> {
+  const current = token();
+  return current ? { authorization: `Bearer ${current}` } : {};
+}
+
+async function readError(response: Response) {
+  const payload: unknown = await response.json().catch(() => null);
+  if (payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string") {
+    return payload.error;
+  }
+  return `Antwoord ${response.status}.`;
+}
+
+export async function refreshAdminSession() {
+  if (!token()) {
+    publish(false);
+    return false;
+  }
+  const response = await fetch("/api/admin/session", { headers: authHeaders() });
+  const payload: unknown = await response.json().catch(() => null);
+  const ok = Boolean(
+    payload && typeof payload === "object" && "authenticated" in payload && payload.authenticated === true,
+  );
+  if (!ok) sessionStorage.removeItem(TOKEN_KEY);
+  publish(ok);
+  return ok;
+}
+
+export async function loginAdmin(username: string, password: string) {
+  const response = await fetch("/api/admin/login", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!response.ok) throw new Error(await readError(response));
+  const payload: unknown = await response.json();
+  if (!payload || typeof payload !== "object" || !("token" in payload) || typeof payload.token !== "string") {
+    throw new Error("Aanmelden gaf geen sessie.");
+  }
+  sessionStorage.setItem(TOKEN_KEY, payload.token);
+  publish(true);
+}
+
+export async function logoutAdmin() {
+  await fetch("/api/admin/logout", { method: "POST", headers: authHeaders() }).catch(() => undefined);
+  sessionStorage.removeItem(TOKEN_KEY);
+  publish(false);
+}
+
+export async function fetchSettings(): Promise<PublicSettings> {
+  const response = await fetch("/api/admin/settings", { headers: authHeaders() });
+  if (!response.ok) throw new Error(await readError(response));
+  return (await response.json()) as PublicSettings;
+}
+
+export async function saveSettings(input: {
+  tenantId: string;
+  clientId: string;
+  clientSecret: string;
+  siteUrl: string;
+  listName: string;
+  newPassword: string;
+}) {
+  const response = await fetch("/api/admin/settings", {
+    method: "PUT",
+    headers: { "content-type": "application/json", ...authHeaders() },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) throw new Error(await readError(response));
+  return (await response.json()) as PublicSettings;
+}
+
+export async function testAdminConnection() {
+  const response = await fetch("/api/admin/test", { method: "POST", headers: authHeaders() });
+  if (!response.ok) throw new Error(await readError(response));
+  const payload: unknown = await response.json();
+  if (!payload || typeof payload !== "object" || !("message" in payload) || typeof payload.message !== "string") {
+    throw new Error("Test gaf geen resultaat.");
+  }
+  return payload.message;
+}
+
+export function useAdminSession() {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      listeners.add(onStoreChange);
+      return () => listeners.delete(onStoreChange);
+    },
+    () => authenticated,
+    () => false,
+  );
+}
+
+void refreshAdminSession();

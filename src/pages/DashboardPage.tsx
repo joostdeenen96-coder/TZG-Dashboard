@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AdminPanel } from "../components/AdminPanel";
 import { CardState } from "../components/CardState";
 import { DieselCard } from "../components/DieselCard";
 import { Header } from "../components/Header";
@@ -7,6 +8,7 @@ import { SlideshowCard } from "../components/SlideshowCard";
 import { WaterLevelCard } from "../components/WaterLevelCard";
 import { WeatherCard } from "../components/WeatherCard";
 import { useAmsterdamNow } from "../hooks/useAmsterdamNow";
+import { useAdminSession } from "../services/adminService";
 import { useWaterLevels } from "../services/waterLevelService";
 import type { WaterLevelsResponse } from "../types";
 
@@ -29,6 +31,8 @@ export function DashboardPage() {
   const now = useAmsterdamNow();
   const [scale, setScale] = useState(readScale);
   const water = useWaterLevels();
+  const authenticated = useAdminSession();
+  const [adminOpen, setAdminOpen] = useState(false);
   const updatedAt = water.status === "ready" ? latestUpdatedAt(water.data) : null;
 
   useEffect(() => {
@@ -47,7 +51,12 @@ export function DashboardPage() {
         >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(880px_240px_at_0%_0%,rgba(230,179,37,0.12),transparent_60%),radial-gradient(720px_280px_at_100%_0%,rgba(109,127,146,0.16),transparent_58%)]" />
           <div className="relative flex min-h-0 flex-1 flex-col gap-3">
-            <Header now={now} updatedAt={updatedAt} />
+            <Header
+              now={now}
+              updatedAt={updatedAt}
+              adminLabel={authenticated ? "Instellingen" : "Inloggen"}
+              onAdmin={() => setAdminOpen(true)}
+            />
             <section className="grid h-[228px] shrink-0 grid-cols-4 gap-3">
               {water.status === "loading" ? (
                 <CardState className="col-span-3" status="loading" title="Waterstanden" message="Peilen worden opgehaald." />
@@ -74,6 +83,7 @@ export function DashboardPage() {
             <section className="min-h-0 flex-1">
               <SlideshowCard />
             </section>
+            {adminOpen ? <AdminPanel authenticated={authenticated} onClose={() => setAdminOpen(false)} /> : null}
           </div>
         </div>
       </div>

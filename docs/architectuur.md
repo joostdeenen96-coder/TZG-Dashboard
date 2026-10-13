@@ -88,7 +88,9 @@ De publieke dataset die de HVZ-site zelf ververst, bestaat uit twee gestructuree
 const activeDieselSource: DieselSource = "sharepoint";
 ```
 
-`SharePointDieselProvider` leest via Microsoft Graph de site `https://teunesen.sharepoint.com/sites/Facturatie` en de lijst `Dieseltoeslagen Asvervoer`. Het record met `Actief = true` is de actuele toeslag. Bij meerdere actieve records wint de laatste peildatum. De app-registratie komt uit `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID` en `GRAPH_CLIENT_SECRET`. Die waarden staan niet in de repository.
+`SharePointDieselProvider` leest via Microsoft Graph de site en de lijst uit de beheerinstellingen. Standaard is dat `https://teunesen.sharepoint.com/sites/Facturatie` en `Dieseltoeslagen Asvervoer`. Het record met `Actief = true` is de actuele toeslag. Bij meerdere actieve records wint de laatste peildatum.
+
+Rechtsboven opent **Inloggen** het beheer. Eerste aanmelding is `admin` / `teunesen`. De tenant, client-id, client secret, site en lijst worden lokaal in `data/settings.json` gezet en niet in de repository. Omgevingsvariabelen `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID` en `GRAPH_CLIENT_SECRET` vullen lege velden nog aan. **Verbinding testen** controleert of Graph de lijst vindt.
 
 Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record), dan logt de service de fout en valt terug op `MockDieselProvider`. Die fallback blijft de laatste lokale cijfers: peildatum 2026-10-13, toeslag 12,4 procent, actief. Er is geen dieselprijs in die fallback (`dieselPrijs` is 0).
 

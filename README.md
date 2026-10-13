@@ -25,7 +25,7 @@ npm run preview
 - Weerbericht Gennep en laatste bedrijfsnieuws
 - Diavoorstelling van projecten, wisselt elke 8 seconden
 
-De browser praat alleen met deze API. Waterstanden: `GET /api/waterlevels`. Dieseltoeslag: `GET /api/dieselsurcharge`, standaard uit SharePoint via Microsoft Graph. Zonder `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID` en `GRAPH_CLIENT_SECRET` valt de API terug op de lokale dieselcijfers. Weer, nieuws en projectfoto’s staan in `src/services/dashboardService.ts`. Details staan in `docs/architectuur.md`.
+De browser praat alleen met deze API. Waterstanden: `GET /api/waterlevels`. Dieseltoeslag: `GET /api/dieselsurcharge`. Rechtsboven staat **Inloggen**. Daarmee zet een beheerder de Graph-koppeling (tenant, client, secret, SharePoint-site en lijst). Eerste aanmelding: `admin` / `teunesen`. Het wachtwoord en de sleutels blijven lokaal in `data/settings.json` en gaan niet de repository in. Zonder geldige Graph-gegevens valt de dieseltoeslag terug op de lokale cijfers. Weer, nieuws en projectfoto’s staan in `src/services/dashboardService.ts`. Details staan in `docs/architectuur.md`.
 
 ## Foto’s
 
