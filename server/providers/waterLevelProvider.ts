@@ -4,6 +4,17 @@ export type WaterStatus = "laag" | "normaal" | "hoog";
 
 export type WaterTrend = "stijgend" | "dalend" | "gelijk";
 
+export type WaterPoint = {
+  timestamp: string;
+  levelCm: number;
+};
+
+export type WaterForecastKind = "verwacht" | "inschatting";
+
+export type WaterForecastPoint = WaterPoint & {
+  kind: WaterForecastKind;
+};
+
 export type WaterStationResult = {
   id: WaterStationId;
   name: string;
@@ -14,6 +25,10 @@ export type WaterStationResult = {
   status: WaterStatus | null;
   updatedAt: string | null;
   source: string;
+  series: WaterPoint[];
+  forecast: WaterForecastPoint[];
+  forecastError: string | null;
+  graphPath: string | null;
   error: string | null;
 };
 
@@ -44,6 +59,10 @@ export function failedStation(
     status: null,
     updatedAt: null,
     source: meta.source,
+    series: [],
+    forecast: [],
+    forecastError: null,
+    graphPath: null,
     error: message,
   };
 }

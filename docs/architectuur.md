@@ -1,6 +1,6 @@
 # Architectuur planningscherm
 
-Het scherm op 1920×1080 blijft hetzelfde: klok, vier KPI-kaarten, weer, nieuws en de projectcarrousel. De browser praat alleen met onze API. Er gaat geen request naar ELWIS, PEGELONLINE, HVZ of een andere externe site, en er is geen SharePoint-aanroep.
+Het scherm is opgezet voor 2560×1440 en schaalt naar het venster. De browser praat alleen met onze API. Er gaat geen request naar ELWIS, PEGELONLINE, HVZ of SharePoint.
 
 ## Waterstanden
 
@@ -35,6 +35,10 @@ Het scherm op 1920×1080 blijft hetzelfde: klok, vier KPI-kaarten, weer, nieuws 
 | `changeCm` | Verschil met de waterstand van ongeveer een dag eerder, in cm |
 | `updatedAt` | Tijdstip van de actuele meting, ISO 8601 met offset |
 | `source` | Naam van de bron |
+| `series` | Uitgedunde meetreeks van de laatste vier dagen, `{ timestamp, levelCm }` |
+| `forecast` | PEGELONLINE-tijdreeks `WV`: `kind` is `verwacht` of `inschatting` |
+| `forecastError` | `null` als de verwachting geladen is, anders een tekst. De actuele stand blijft staan |
+| `graphPath` | Alleen Maxau: `/api/waterlevels/maxau/graph`, de GIF die HVZ zelf toont |
 | `error` | `null` bij een geslaagde meting, anders een tekst en lege getallen |
 
 `useWaterLevels()` in `src/services/waterLevelService.ts` leest alleen `/api/waterlevels` en zet het object om naar de drie kaarten. Een station met `error` toont de fout op die kaart.
@@ -65,7 +69,8 @@ Bevestigde stations op water `RHEIN`, tijdreeks `W` (Wasserstand Rohdaten), eenh
 Per station twee JSON-aanroepen, geen HTML:
 
 - `GET /stations/{uuid}/W.json?includeCurrentMeasurement=true` — actuele waarde, tijdstip en `stateMnwMhw`
-- `GET /stations/{uuid}/W/measurements.json?start=P2D` — ruwe reeks van de laatste twee dagen
+- `GET /stations/{uuid}/W/measurements.json?start=P4D` — ruwe reeks van de laatste vier dagen, uitgedund tot de grafiek
+- `GET /stations/{uuid}/WV/measurements.json` — waterstandverwachting. `forecast` wordt `verwacht`, `estimate` wordt `inschatting`. Faalt deze reeks, dan blijft de actuele stand staan en vult `forecastError`
 
 Het verschil is de actuele centimeter minus de meting die het dichtst bij 24 uur eerder ligt. Ligt die meting meer dan 90 minuten van dat tijdstip af, dan faalt het station. `stateMnwMhw` wordt `low` → `laag`, `normal` → `normaal`, `high` → `hoog`. Andere toestanden (`unknown`, `commented`, `out-dated`) worden een fout, geen verzonnen status.
 
@@ -79,6 +84,8 @@ De publieke dataset die de HVZ-site zelf ververst, bestaat uit twee gestructuree
 - `https://www.hvz.baden-wuerttemberg.de/js/dat-peg-tmv.js` — dagwaarde (Tagesmittel) van de vorige kalenderdag, sleutel `9016`
 
 `changeCm` is de actuele centimeter minus die dagwaarde. De dagwaarde moet op de kalenderdag vóór de meting staan. Status volgt dezelfde grenzen als PEGELONLINE: op of onder MNW is `laag`, op of boven de laagste hoogwaterstand is `hoog`, daartussen `normaal`. Ontbreekt een van die getallen, of staat de waterstand niet in centimeter, dan faalt Maxau.
+
+De kaart toont de grafiek die HVZ zelf publiceert: `https://www.hvz.baden-wuerttemberg.de/gifs/09016-2001.GIF` (meting, verwachting en inschatting). De browser haalt die op via `GET /api/waterlevels/maxau/graph`. PEGELONLINE heeft voor Maxau geen tijdreeks `WV`.
 
 ## Dieseltoeslag
 
@@ -114,4 +121,5 @@ Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record), 
 | Kaub, Ruhrort | PEGELONLINE via onze API | live |
 | Maxau | HVZ-dataset via onze API | live |
 | Dieseltoeslag | SharePoint via Microsoft Graph, mock alleen bij een Graph-fout | live zodra de Graph-variabelen gezet zijn |
-| Weer, nieuws, projectfoto’s | `src/services/dashboardService.ts` | mock, geen externe site |
+| Weer, projectfoto’s | `src/services/dashboardService.ts` | mock, geen externe site |
+| WijTeunesen-nieuws | `GET /api/news`, site `https://teunesen.sharepoint.com/sites/wt-nieuws` | alleen `promotionKind = newsPost` op die site. Zonder Graph-gegevens blijft de lijst leeg en toont het scherm voorbeeldkaarten |

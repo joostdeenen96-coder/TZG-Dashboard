@@ -12,7 +12,15 @@ export class MaxauProvider implements WaterLevelProvider {
   async getCurrentData(): Promise<WaterStationResult> {
     try {
       const reading = await readMaxauFromHvz();
-      return { ...meta, ...reading, error: null };
+      return {
+        ...meta,
+        ...reading,
+        series: [],
+        forecast: [],
+        forecastError: null,
+        graphPath: "/api/waterlevels/maxau/graph",
+        error: null,
+      };
     } catch (error) {
       return failedStation(meta, error);
     }

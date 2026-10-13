@@ -4,6 +4,17 @@ export type WaterTrend = "stijgend" | "dalend" | "gelijk";
 
 export type WaterStationId = "kaub" | "ruhrort" | "maxau";
 
+export type WaterPoint = {
+  timestamp: string;
+  levelCm: number;
+};
+
+export type WaterForecastKind = "verwacht" | "inschatting";
+
+export type WaterForecastPoint = WaterPoint & {
+  kind: WaterForecastKind;
+};
+
 export type WaterStationResult = {
   id: WaterStationId;
   name: string;
@@ -14,6 +25,25 @@ export type WaterStationResult = {
   status: WaterStatus | null;
   updatedAt: string | null;
   source: string;
+  series: WaterPoint[];
+  forecast: WaterForecastPoint[];
+  forecastError: string | null;
+  graphPath: string | null;
+  error: string | null;
+};
+
+export type WijNewsItem = {
+  id: string;
+  title: string;
+  summary: string;
+  publishedAt: string;
+};
+
+export type WijNewsResponse = {
+  site: string;
+  source: "WijTeunesen";
+  connected: boolean;
+  items: WijNewsItem[];
   error: string | null;
 };
 
@@ -52,13 +82,6 @@ export type WeatherReport = {
   wind: string;
   humidityPct: number;
   forecast: ForecastDay[];
-};
-
-export type NewsItem = {
-  id: string;
-  title: string;
-  summary: string;
-  publishedAt: string;
 };
 
 export type ProjectSlide = {

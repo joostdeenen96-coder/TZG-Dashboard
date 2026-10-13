@@ -1,5 +1,14 @@
 import { useSyncExternalStore } from "react";
-import type { QueryState, WaterLevelsResponse, WaterStationId, WaterStationResult, WaterStatus, WaterTrend } from "../types";
+import type {
+  QueryState,
+  WaterForecastPoint,
+  WaterLevelsResponse,
+  WaterPoint,
+  WaterStationId,
+  WaterStationResult,
+  WaterStatus,
+  WaterTrend,
+} from "../types";
 
 const WATER_LEVELS_PATH = "/api/waterlevels";
 const REFRESH_MS = 5 * 60 * 1000;
@@ -48,8 +57,37 @@ function failed(id: WaterStationId, message: string, row?: Record<string, unknow
     status: null,
     updatedAt: null,
     source: text(row?.source, ""),
+    series: [],
+    forecast: [],
+    forecastError: null,
+    graphPath: null,
     error: message,
   };
+}
+
+function seriesPoints(value: unknown): WaterPoint[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const row = item as Record<string, unknown>;
+    if (typeof row.timestamp !== "string" || typeof row.levelCm !== "number" || !Number.isFinite(row.levelCm)) return [];
+    return [{ timestamp: row.timestamp, levelCm: row.levelCm }];
+  });
+}
+
+function forecastPoints(value: unknown): WaterForecastPoint[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const row = item as Record<string, unknown>;
+    if (row.kind !== "verwacht" && row.kind !== "inschatting") return [];
+    if (typeof row.timestamp !== "string" || typeof row.levelCm !== "number" || !Number.isFinite(row.levelCm)) return [];
+    return [{ timestamp: row.timestamp, levelCm: row.levelCm, kind: row.kind }];
+  });
+}
+
+function localGraphPath(value: unknown) {
+  return typeof value === "string" && value.startsWith("/api/") ? value : null;
 }
 
 function normalizeStation(id: WaterStationId, value: unknown): WaterStationResult {
@@ -75,6 +113,10 @@ function normalizeStation(id: WaterStationId, value: unknown): WaterStationResul
     status: row.status,
     updatedAt: row.updatedAt,
     source: text(row.source, ""),
+    series: seriesPoints(row.series),
+    forecast: forecastPoints(row.forecast),
+    forecastError: typeof row.forecastError === "string" && row.forecastError.trim() ? row.forecastError : null,
+    graphPath: localGraphPath(row.graphPath),
     error: null,
   };
 }

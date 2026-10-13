@@ -12,8 +12,8 @@ import { useAdminSession } from "../services/adminService";
 import { useWaterLevels } from "../services/waterLevelService";
 import type { WaterLevelsResponse } from "../types";
 
-const STAGE_WIDTH = 1920;
-const STAGE_HEIGHT = 1080;
+const STAGE_WIDTH = 2560;
+const STAGE_HEIGHT = 1440;
 
 function readScale() {
   if (typeof window === "undefined") return 1;
@@ -46,7 +46,7 @@ export function DashboardPage() {
     <div className="grid h-screen w-screen place-items-center overflow-hidden bg-ink">
       <div className="relative overflow-hidden" style={{ width: STAGE_WIDTH * scale, height: STAGE_HEIGHT * scale }}>
         <div
-          className="absolute top-0 left-0 box-border flex h-[1080px] w-[1920px] origin-top-left flex-col gap-3 bg-ink p-4"
+          className="absolute top-0 left-0 box-border flex h-[1440px] w-[2560px] origin-top-left flex-col gap-4 bg-ink p-5"
           style={{ transform: `scale(${scale})` }}
         >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(880px_240px_at_0%_0%,rgba(230,179,37,0.12),transparent_60%),radial-gradient(720px_280px_at_100%_0%,rgba(109,127,146,0.16),transparent_58%)]" />
@@ -57,7 +57,7 @@ export function DashboardPage() {
               adminLabel={authenticated ? "Instellingen" : "Inloggen"}
               onAdmin={() => setAdminOpen(true)}
             />
-            <section className="grid h-[228px] shrink-0 grid-cols-4 gap-3">
+            <section className="grid h-[640px] shrink-0 grid-cols-4 gap-4">
               {water.status === "loading" ? (
                 <CardState className="col-span-3" status="loading" title="Waterstanden" message="Peilen worden opgehaald." />
               ) : null}
@@ -69,14 +69,14 @@ export function DashboardPage() {
               ) : null}
               {water.status === "ready" ? (
                 <>
-                  <WaterLevelCard station={water.data.kaub} delay={0} />
-                  <WaterLevelCard station={water.data.ruhrort} delay={0.05} />
-                  <WaterLevelCard station={water.data.maxau} delay={0.1} />
+                  <WaterLevelCard station={water.data.kaub} />
+                  <WaterLevelCard station={water.data.ruhrort} />
+                  <WaterLevelCard station={water.data.maxau} />
                 </>
               ) : null}
               <DieselCard />
             </section>
-            <section className="grid h-[252px] shrink-0 grid-cols-[3fr_2fr] gap-3">
+            <section className="grid h-[360px] shrink-0 grid-cols-[3fr_2fr] gap-4">
               <WeatherCard />
               <NewsCard />
             </section>

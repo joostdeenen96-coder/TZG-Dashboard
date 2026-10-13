@@ -1,5 +1,11 @@
 import { fetchJson } from "./http.js";
-import { trendFromChange, type WaterStatus, type WaterTrend } from "./waterLevelProvider.js";
+import {
+  trendFromChange,
+  type WaterForecastPoint,
+  type WaterPoint,
+  type WaterStatus,
+  type WaterTrend,
+} from "./waterLevelProvider.js";
 
 const PEGELONLINE_BASE = "https://www.pegelonline.wsv.de/webservices/rest-api/v2";
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -16,6 +22,10 @@ export type PegelonlineReading = {
   trend: WaterTrend;
   status: WaterStatus;
   updatedAt: string;
+  series: WaterPoint[];
+  forecast: WaterForecastPoint[];
+  forecastError: string | null;
+  graphPath: null;
 };
 
 function asObject(value: unknown, message: string) {
@@ -62,10 +72,61 @@ function valueOneDayEarlier(measurements: Measurement[], currentIso: string) {
   return best.value;
 }
 
+function thin(measurements: Measurement[], maxPoints: number) {
+  if (measurements.length <= maxPoints) return measurements;
+  const picked: Measurement[] = [];
+  const step = (measurements.length - 1) / (maxPoints - 1);
+  for (let index = 0; index < maxPoints; index += 1) {
+    picked.push(measurements[Math.round(index * step)]);
+  }
+  return picked;
+}
+
+function toPoint(measurement: Measurement): WaterPoint {
+  return { timestamp: measurement.timestamp, levelCm: Math.round(measurement.value) };
+}
+
+function forecastKind(value: unknown): WaterForecastPoint["kind"] | null {
+  if (value === "forecast" || value === "forcast") return "verwacht";
+  if (value === "estimate") return "inschatting";
+  return null;
+}
+
+function asForecast(value: unknown): WaterForecastPoint[] {
+  if (!Array.isArray(value)) throw new Error("Verwachting is ongeldig.");
+  const points: WaterForecastPoint[] = [];
+  for (const item of value) {
+    const row = asObject(item, "Verwachting is ongeldig.");
+    const kind = forecastKind(row.type);
+    if (!kind || typeof row.timestamp !== "string" || typeof row.value !== "number" || !Number.isFinite(row.value)) {
+      continue;
+    }
+    points.push({ timestamp: row.timestamp, levelCm: Math.round(row.value), kind });
+  }
+  points.sort((left, right) => Date.parse(left.timestamp) - Date.parse(right.timestamp));
+  return points;
+}
+
+async function readForecast(uuid: string): Promise<{ forecast: WaterForecastPoint[]; forecastError: string | null }> {
+  try {
+    const raw = await fetchJson(`${PEGELONLINE_BASE}/stations/${uuid}/WV/measurements.json`);
+    const forecast = asForecast(raw);
+    if (forecast.length === 0) return { forecast: [], forecastError: "Geen verwachting in de bronreeks." };
+    return { forecast, forecastError: null };
+  } catch (error) {
+    const message = error instanceof Error && error.message ? error.message : "Verwachting niet bereikbaar.";
+    return { forecast: [], forecastError: message };
+  }
+}
+
 export async function readPegelonlineWater(station: { uuid: string; shortname: string }): Promise<PegelonlineReading> {
   const seriesUrl = `${PEGELONLINE_BASE}/stations/${station.uuid}/W.json?includeCurrentMeasurement=true`;
-  const historyUrl = `${PEGELONLINE_BASE}/stations/${station.uuid}/W/measurements.json?start=P2D`;
-  const [seriesRaw, historyRaw] = await Promise.all([fetchJson(seriesUrl), fetchJson(historyUrl)]);
+  const historyUrl = `${PEGELONLINE_BASE}/stations/${station.uuid}/W/measurements.json?start=P4D`;
+  const [seriesRaw, historyRaw, forecastResult] = await Promise.all([
+    fetchJson(seriesUrl),
+    fetchJson(historyUrl),
+    readForecast(station.uuid),
+  ]);
   const series = asObject(seriesRaw, `Tijdreeks ${station.shortname} is ongeldig.`);
   if (series.shortname !== "W" || series.unit !== "cm") {
     throw new Error("Waterstand staat niet in centimeter.");
@@ -74,7 +135,8 @@ export async function readPegelonlineWater(station: { uuid: string; shortname: s
   if (typeof current.timestamp !== "string" || typeof current.value !== "number" || !Number.isFinite(current.value)) {
     throw new Error("Actuele waterstand is ongeldig.");
   }
-  const previous = valueOneDayEarlier(asMeasurements(historyRaw), current.timestamp);
+  const history = asMeasurements(historyRaw);
+  const previous = valueOneDayEarlier(history, current.timestamp);
   const levelCm = Math.round(current.value);
   const changeCm = levelCm - Math.round(previous);
   return {
@@ -83,5 +145,9 @@ export async function readPegelonlineWater(station: { uuid: string; shortname: s
     trend: trendFromChange(changeCm),
     status: statusFromState(current.stateMnwMhw),
     updatedAt: current.timestamp,
+    series: thin(history, 48).map(toPoint),
+    forecast: forecastResult.forecast,
+    forecastError: forecastResult.forecastError,
+    graphPath: null,
   };
 }

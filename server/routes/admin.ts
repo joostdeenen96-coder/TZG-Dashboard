@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { resetGraphCache, testSharePointConnection } from "../providers/sharePointDieselProvider.js";
+import { resetWijNewsCache } from "../providers/wijNewsProvider.js";
 import {
   clearLoginFailures,
   createSession,
@@ -67,6 +68,7 @@ adminRouter.put("/settings", (req, res) => {
       newPassword: typeof body.newPassword === "string" ? body.newPassword : "",
     });
     resetGraphCache();
+    resetWijNewsCache();
     res.json(settings);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Instellingen niet opgeslagen.";

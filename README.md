@@ -1,6 +1,6 @@
 # Teunesen TV-dashboard
 
-Volledig scherm voor de werkvloer en de kantine: waterstanden, dieseltoeslag, weer in Gennep, bedrijfsnieuws en projectfoto’s. Donker industrieel thema, Nederlandse teksten, bedoeld voor een scherm van 1920×1080.
+Volledig scherm voor de werkvloer en de kantine: waterstanden met bron-grafiek en verwachting, dieseltoeslag, weer in Gennep, WijTeunesen-nieuws en projectfoto’s. Donker industrieel thema, Nederlandse teksten, opgezet voor 2560×1440.
 
 ## Starten
 
@@ -22,10 +22,10 @@ npm run preview
 
 - Bovenbalk met logo en live klok (Europe/Amsterdam)
 - Vier kaarten: Kaub, Ruhrort, Maxau en dieseltoeslag
-- Weerbericht Gennep en laatste bedrijfsnieuws
+- Weerbericht Gennep en previews van WijTeunesen-nieuws (`/sites/wt-nieuws`)
 - Diavoorstelling van projecten, wisselt elke 8 seconden
 
-De browser praat alleen met deze API. Waterstanden: `GET /api/waterlevels`. Dieseltoeslag: `GET /api/dieselsurcharge`. Rechtsboven staat **Inloggen**. Daarmee zet een beheerder de Graph-koppeling (tenant, client, secret, SharePoint-site en lijst). Eerste aanmelding: `admin` / `teunesen`. Het wachtwoord en de sleutels blijven lokaal in `data/settings.json` en gaan niet de repository in. Zonder geldige Graph-gegevens valt de dieseltoeslag terug op de lokale cijfers. Weer, nieuws en projectfoto’s staan in `src/services/dashboardService.ts`. Details staan in `docs/architectuur.md`.
+De browser praat alleen met deze API. Waterstanden: `GET /api/waterlevels`. De grafiek van Maxau: `GET /api/waterlevels/maxau/graph`. Dieseltoeslag: `GET /api/dieselsurcharge`. WijTeunesen-nieuws: `GET /api/news`. Rechtsboven staat **Inloggen**. Daarmee zet een beheerder de Graph-koppeling (tenant, client, secret, SharePoint-site en lijst voor de dieseltoeslag). Het nieuws komt alleen van `https://teunesen.sharepoint.com/sites/wt-nieuws`. Eerste aanmelding: `admin` / `teunesen`. Het wachtwoord en de sleutels blijven lokaal in `data/settings.json` en gaan niet de repository in. Zonder geldige Graph-gegevens valt de dieseltoeslag terug op de lokale cijfers en blijft het nieuws leeg, met voorbeeldkaarten. Weer en projectfoto’s staan in `src/services/dashboardService.ts`. Details staan in `docs/architectuur.md`.
 
 ## Foto’s
 
