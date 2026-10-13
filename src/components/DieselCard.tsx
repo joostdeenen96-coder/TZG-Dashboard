@@ -73,7 +73,9 @@ export function DieselCard() {
           <h2 className="truncate font-display text-[32px] leading-none font-semibold tracking-wide uppercase">
             Dieseltoeslag
           </h2>
-          <p className="mt-1 text-[13px] font-medium tracking-[0.14em] text-mist uppercase">Asvervoer · laatste weken</p>
+          <p className="mt-1 truncate text-[13px] font-medium tracking-[0.14em] text-mist uppercase">
+            Dieseltoeslagen Asvervoer
+          </p>
         </div>
         <span className="shrink-0 rounded-full border border-gold/45 bg-gold/12 px-3 py-1 text-[13px] font-semibold tracking-[0.12em] text-[#f0d078] uppercase">
           {surcharge.actief ? "actief" : "inactief"}

@@ -2,6 +2,9 @@ import { getIntegrationSettings, sharePointGraphPath } from "../services/setting
 import type { DieselSurcharge, DieselSurchargeProvider, DieselWeek } from "./dieselSurchargeProvider.js";
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
+const DIESEL_SITE_URL = "https://teunesen.sharepoint.com/sites/Facturatie";
+const DIESEL_LIST_NAME = "Dieseltoeslagen Asvervoer";
+const DIESEL_TENANT_ID = "ca0e0118-1eb1-4661-bd22-8ca64479f1d3";
 
 type TokenCache = {
   accessToken: string;
@@ -28,10 +31,14 @@ export function resetGraphCache() {
 
 function graphCredentials() {
   const { graph } = getIntegrationSettings();
-  if (!graph.tenantId || !graph.clientId || !graph.clientSecret) {
-    throw new Error("Graph-gegevens ontbreken. Vul ze in via Instellingen.");
+  if (!graph.clientId || !graph.clientSecret) {
+    throw new Error("Graph client-id of client secret ontbreekt.");
   }
-  return graph;
+  return {
+    tenantId: DIESEL_TENANT_ID,
+    clientId: graph.clientId,
+    clientSecret: graph.clientSecret,
+  };
 }
 
 function asObject(value: unknown, message: string) {
@@ -218,18 +225,17 @@ function withWeeks(active: DieselWeek, records: DieselWeek[]): DieselSurcharge {
 }
 
 async function openActiveList() {
-  const { sharepoint } = getIntegrationSettings();
-  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(sharepoint.siteUrl))), "SharePoint-site is ongeldig.");
+  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(DIESEL_SITE_URL))), "SharePoint-site is ongeldig.");
   if (typeof site.id !== "string") throw new Error("SharePoint-site niet gevonden.");
   const lists = await graphList(
     graphUrl(`/sites/${site.id}/lists`, {
       $select: "id,displayName",
-      $filter: `displayName eq '${sharepoint.listName}'`,
+      $filter: `displayName eq '${DIESEL_LIST_NAME}'`,
     }),
   );
-  const list = lists.find((item) => item.displayName === sharepoint.listName);
-  if (!list || typeof list.id !== "string") throw new Error(`Lijst ${sharepoint.listName} niet gevonden.`);
-  return { siteId: site.id, listId: list.id, listName: sharepoint.listName };
+  const list = lists.find((item) => item.displayName === DIESEL_LIST_NAME);
+  if (!list || typeof list.id !== "string") throw new Error(`Lijst ${DIESEL_LIST_NAME} niet gevonden.`);
+  return { siteId: site.id, listId: list.id, listName: DIESEL_LIST_NAME };
 }
 
 export async function testSharePointConnection() {
