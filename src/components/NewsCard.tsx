@@ -71,14 +71,16 @@ export function NewsCard() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="flex min-h-0 items-start gap-8 px-10 py-6">
+          <div className="flex h-full min-h-0 gap-8 px-10 py-6">
             {active.imagePath && hiddenPhoto !== active.id ? (
-              <img
-                src={active.imagePath}
-                alt=""
-                className="mt-1 h-auto max-h-[280px] w-auto max-w-[260px] shrink-0 rounded-xl object-contain"
-                onError={() => setHiddenPhoto(active.id)}
-              />
+              <div className="flex w-[380px] shrink-0 items-center justify-center">
+                <img
+                  src={active.imagePath}
+                  alt=""
+                  className="h-[320px] w-[380px] rounded-xl object-contain"
+                  onError={() => setHiddenPhoto(active.id)}
+                />
+              </div>
             ) : null}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <div className="flex items-center justify-between gap-6">
