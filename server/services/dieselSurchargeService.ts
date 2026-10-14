@@ -15,7 +15,7 @@ export async function getDieselSurcharge(): Promise<DieselSurcharge> {
   try {
     const record = await dieselProviders[activeDieselSource].getCurrentData();
     console.info(
-      `Dieseltoeslag via ${activeDieselSource}: peildatum ${record.peildatum}, toeslag ${record.toeslagPercentage}%, actief ${record.actief}.`,
+      `Dieseltoeslag via SharePointDieselProvider: peildatum ${record.peildatum}, toeslag ${record.toeslagPercentage}%, actief ${record.actief}.`,
     );
     return record;
   } catch (error) {

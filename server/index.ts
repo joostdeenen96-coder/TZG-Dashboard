@@ -1,4 +1,7 @@
 import express from "express";
+import { loadLocalEnv } from "./services/graphClient.js";
+
+loadLocalEnv();
 import { adminRouter } from "./routes/admin.js";
 import { configRouter } from "./routes/config.js";
 import { dieselSurchargeRouter } from "./routes/dieselSurcharge.js";

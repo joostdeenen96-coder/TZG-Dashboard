@@ -1,7 +1,6 @@
-import { getDashboardConfig, GRAPH_TENANT_ID } from "../services/dashboardConfig.js";
-import { getIntegrationSettings, sharePointGraphPath } from "../services/settingsService.js";
-
-const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
+import { getDashboardConfig } from "../services/dashboardConfig.js";
+import { graphGet, graphUrl, resetGraphCache } from "../services/graphClient.js";
+import { sharePointGraphPath } from "../services/settingsService.js";
 
 export type WijNewsItem = {
   id: string;
@@ -10,16 +9,8 @@ export type WijNewsItem = {
   publishedAt: string;
 };
 
-type TokenCache = {
-  key: string;
-  accessToken: string;
-  expiresAt: number;
-};
-
-let tokenCache: TokenCache | null = null;
-
 export function resetWijNewsCache() {
-  tokenCache = null;
+  resetGraphCache();
 }
 
 function asObject(value: unknown, message: string) {
@@ -27,80 +18,11 @@ function asObject(value: unknown, message: string) {
   return value as Record<string, unknown>;
 }
 
-async function graphError(response: Response) {
-  const text = await response.text();
-  try {
-    const body = JSON.parse(text) as { error?: { code?: string; message?: string }; error_description?: string };
-    const detail = body.error?.message || body.error?.code || body.error_description;
-    if (detail) return `Graph antwoordde met ${response.status}: ${detail.slice(0, 180)}`;
-  } catch {
-    // De statuscode blijft de fout.
-  }
-  return `Graph antwoordde met ${response.status}.`;
-}
-
-async function accessToken() {
-  const { graph } = getIntegrationSettings();
-  const tenantId = graph.tenantId || GRAPH_TENANT_ID;
-  if (!graph.clientId || !graph.clientSecret) {
-    throw new Error("Graph client-id of client secret ontbreekt.");
-  }
-  const key = `${tenantId}:${graph.clientId}:${graph.clientSecret}`;
-  if (tokenCache && tokenCache.key === key && tokenCache.expiresAt > Date.now() + 60_000) return tokenCache.accessToken;
-  const body = new URLSearchParams({
-    client_id: graph.clientId,
-    client_secret: graph.clientSecret,
-    scope: "https://graph.microsoft.com/.default",
-    grant_type: "client_credentials",
-  });
-  let response: Response;
-  try {
-    response = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body,
-      signal: AbortSignal.timeout(12_000),
-    });
-  } catch {
-    throw new Error("Microsoft Graph-token is niet bereikbaar.");
-  }
-  if (!response.ok) throw new Error(await graphError(response));
-  const payload = asObject(await response.json(), "Graph-token is ongeldig.");
-  if (typeof payload.access_token !== "string" || typeof payload.expires_in !== "number") {
-    throw new Error("Graph-token is ongeldig.");
-  }
-  tokenCache = { key, accessToken: payload.access_token, expiresAt: Date.now() + payload.expires_in * 1000 };
-  return payload.access_token;
-}
-
-async function graphFetch(url: URL): Promise<unknown> {
-  const token = await accessToken();
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      headers: { authorization: `Bearer ${token}`, accept: "application/json" },
-      signal: AbortSignal.timeout(12_000),
-    });
-  } catch {
-    throw new Error("Microsoft Graph is niet bereikbaar.");
-  }
-  if (!response.ok) throw new Error(await graphError(response));
-  return response.json();
-}
-
-function graphUrl(path: string, query?: Record<string, string>) {
-  const url = new URL(`${GRAPH_BASE}${path}`);
-  if (query) {
-    for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
-  }
-  return url;
-}
-
 async function graphList(url: URL) {
   const rows: Record<string, unknown>[] = [];
   let next: URL | null = url;
   for (let page = 0; page < 4 && next; page += 1) {
-    const payload = asObject(await graphFetch(next), "Nieuwspagina's zijn ongeldig.");
+    const payload = asObject(await graphGet(next), "Nieuwspagina's zijn ongeldig.");
     if (!Array.isArray(payload.value)) throw new Error("Nieuwspagina's zijn ongeldig.");
     for (const item of payload.value) rows.push(asObject(item, "Nieuwspagina is ongeldig."));
     next = typeof payload["@odata.nextLink"] === "string" ? new URL(payload["@odata.nextLink"]) : null;
@@ -140,7 +62,7 @@ function isWijNews(item: Record<string, unknown>, siteUrl: string) {
 }
 
 async function openNewsLibrary(siteUrl: string, bibliotheek: string) {
-  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(siteUrl))), "Nieuwssite is ongeldig.");
+  const site = asObject(await graphGet(graphUrl(sharePointGraphPath(siteUrl))), "Nieuwssite is ongeldig.");
   if (typeof site.id !== "string") throw new Error("Nieuwssite niet gevonden.");
   const lists = await graphList(
     graphUrl(`/sites/${site.id}/lists`, {
@@ -178,7 +100,7 @@ function toItem(item: Record<string, unknown>): WijNewsItem {
 export async function readWijNews(): Promise<WijNewsItem[]> {
   const config = getDashboardConfig();
   const siteUrl = config.sharepointNieuws.siteUrl;
-  const site = asObject(await graphFetch(graphUrl(sharePointGraphPath(siteUrl))), "WijTeunesen-site is ongeldig.");
+  const site = asObject(await graphGet(graphUrl(sharePointGraphPath(siteUrl))), "WijTeunesen-site is ongeldig.");
   if (typeof site.id !== "string") throw new Error("WijTeunesen-site niet gevonden.");
   let pages: Record<string, unknown>[];
   try {
