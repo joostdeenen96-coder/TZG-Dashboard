@@ -3,6 +3,7 @@ setlocal EnableExtensions
 chcp 65001 >nul
 cd /d "%~dp0.." || (
   echo Projectmap niet gevonden.
+  pause
   exit /b 1
 )
 set "ROOT=%CD%"
@@ -10,14 +11,17 @@ where node >nul 2>&1
 if errorlevel 1 (
   echo Node.js staat niet in PATH.
   echo Installeer de LTS-versie van https://nodejs.org/ en open daarna een nieuw opdrachtvenster.
+  pause
   exit /b 1
 )
 if not exist "node_modules\" (
   echo Afhankelijkheden ontbreken. Voer eerst release\install-dashboard.bat uit.
+  pause
   exit /b 1
 )
 if not exist "node_modules\.bin\vite.cmd" (
   echo Vite ontbreekt. Voer release\install-dashboard.bat opnieuw uit.
+  pause
   exit /b 1
 )
 if not exist ".env" (
@@ -32,26 +36,33 @@ if "%PORT_OPEN%"=="1" (
   start "Teunesen API" /D "%ROOT%" cmd /k npm.cmd run server
 )
 call :wait_port 43124
-if errorlevel 1 exit /b 1
-
-call :port_open 43123
-if "%PORT_OPEN%"=="1" (
-  echo Frontend draait al op poort 43123.
-) else (
-  echo Frontend starten op poort 43123.
-  start "Teunesen web" /D "%ROOT%" cmd /k node_modules\.bin\vite.cmd --host 127.0.0.1 --port 43123 --strictPort
+if errorlevel 1 (
+  pause
+  exit /b 1
 )
-call :wait_port 43123
-if errorlevel 1 exit /b 1
 
-call :open_browser
-echo Dashboard: http://127.0.0.1:43123/
+call :port_open 3000
+if "%PORT_OPEN%"=="1" (
+  echo Frontend draait al op poort 3000.
+) else (
+  echo Frontend starten op poort 3000.
+  start "Teunesen web" /D "%ROOT%" cmd /k node_modules\.bin\vite.cmd --host 127.0.0.1 --port 3000 --strictPort
+)
+call :wait_port 3000
+if errorlevel 1 (
+  pause
+  exit /b 1
+)
+
+call "%~dp0edge-kiosk.bat"
+if errorlevel 1 exit /b 1
+echo Dashboard: http://localhost:3000/
 echo Laat de vensters Teunesen API en Teunesen web open.
 exit /b 0
 
 :port_open
 set "PORT_OPEN=0"
-netstat -ano | findstr /C:":%1 " | findstr /C:"LISTENING" >nul
+netstat -ano | findstr /C:":%1 " | findstr /I /C:"LISTENING" /C:"LUISTEREND" >nul
 if not errorlevel 1 set "PORT_OPEN=1"
 exit /b 0
 
@@ -67,13 +78,3 @@ if %TRIES% GEQ 40 (
 )
 timeout /t 1 /nobreak >nul
 goto wait_port_loop
-
-:open_browser
-set "EDGE=%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
-if not exist "%EDGE%" set "EDGE=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
-if exist "%EDGE%" (
-  start "" "%EDGE%" --kiosk http://127.0.0.1:43123/ --edge-kiosk-type=fullscreen --no-first-run
-) else (
-  start "" http://127.0.0.1:43123/
-)
-exit /b 0

@@ -1,6 +1,6 @@
 # Teunesen TV-dashboard op Windows 11
 
-Het dashboard draait op de pc achter de tv. Twee vensters blijven open: de API op poort 43124 en de webserver op poort 43123. Microsoft Edge opent het scherm op `http://127.0.0.1:43123/`.
+Het dashboard draait op de pc achter de tv. Twee vensters blijven open: de API op poort 43124 en de webserver op poort 3000. Microsoft Edge opent het scherm op `http://localhost:3000/`.
 
 De scripts gebruiken alleen wat Windows 11 zelf heeft: Opdrachtprompt, `netstat`, `timeout`, `where`, `taskkill` en Edge. Node.js installeer je eenmalig van de Node.js-site. Er is geen extra service of procesbeheer nodig.
 
@@ -33,7 +33,7 @@ Zonder deze waarden start het scherm wel. De dieseltoeslag valt dan terug op de 
 
 Plaatsnaam, verversinterval, aantal nieuwsitems en de SharePoint-locaties staan in `config.json`. Die maak je via het verborgen beheer:
 
-1. Open `http://127.0.0.1:43123/admin` in een gewoon Edge-venster, buiten de kiosk.
+1. Open `http://localhost:3000/admin` in een gewoon Edge-venster, buiten de kiosk.
 2. Meld aan met `admin` / `teunesen`.
 3. Sla de instellingen op.
 
@@ -46,8 +46,8 @@ Dubbelklik `release\start-dashboard.bat`.
 Het script doet drie dingen:
 
 1. Het opent het venster **Teunesen API** en start de backend met `npm run server`.
-2. Het wacht tot poort 43124 luistert en opent daarna het venster **Teunesen web**. Dat is Vite op `127.0.0.1:43123`.
-3. Het opent Microsoft Edge in volledig scherm op `http://127.0.0.1:43123/`. Staat Edge niet op de gebruikelijke plek, dan opent het de standaardbrowser.
+2. Het wacht tot poort 43124 luistert en opent daarna het venster **Teunesen web**. Dat is Vite op `http://localhost:3000`.
+3. Het opent Microsoft Edge in kioskmodus op `http://localhost:3000/`. Tabbladen en adresbalk blijven verborgen. Zie `kioskmodus.md`.
 
 Laat beide opdrachtvensters open. Sluiten stopt dat deel van het dashboard.
 
@@ -56,7 +56,7 @@ Draait een poort al, dan start het script dat proces niet opnieuw en opent allee
 Voor een scherm dat aan blijft:
 
 - Energie: bij netstroom het scherm en de slaapstand op Nooit zetten.
-- Automatisch starten: druk op Windows+R, typ `shell:startup` en maak een snelkoppeling naar `start-dashboard.bat`.
+- Automatisch starten: druk op Windows+R, typ `shell:startup` en maak een snelkoppeling naar `start-dashboard.bat`. Die start ook de kiosk. Uitleg staat in `kioskmodus.md`.
 - De kiosk verlaat je met Alt+F4.
 
 ## Herstarten
