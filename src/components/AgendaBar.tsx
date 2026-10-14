@@ -101,7 +101,6 @@ export function AgendaBar() {
   if (state.status === "empty") {
     return (
       <div className="tv-card flex h-full items-center gap-4 px-6" data-status="empty">
-        <p className="text-[13px] font-semibold tracking-[0.22em] text-gold uppercase">WijTeunesen</p>
         <p className="font-display text-[28px] leading-none font-semibold tracking-wide">Agenda</p>
         <p className="text-[18px] text-mist">Geen komende afspraken.</p>
       </div>
@@ -121,7 +120,6 @@ export function AgendaBar() {
   if (agenda.items.length === 0) {
     return (
       <div className="tv-card flex h-full items-center gap-4 px-6" data-status="empty">
-        <p className="text-[13px] font-semibold tracking-[0.22em] text-gold uppercase">WijTeunesen</p>
         <p className="font-display text-[28px] leading-none font-semibold tracking-wide">Agenda</p>
         <p className="text-[18px] text-mist">Geen komende afspraken.</p>
       </div>
@@ -129,10 +127,9 @@ export function AgendaBar() {
   }
 
   return (
-    <section className="tv-card flex h-full min-h-0 items-center gap-5 overflow-hidden px-5" data-status={state.status} aria-label="WijTeunesen agenda">
-      <div className="w-[150px] shrink-0">
-        <p className="text-[12px] font-semibold tracking-[0.22em] text-gold uppercase">WijTeunesen</p>
-        <p className="mt-1 font-display text-[32px] leading-none font-semibold tracking-wide">Agenda</p>
+    <section className="tv-card flex h-full min-h-0 items-center gap-5 overflow-hidden px-5" data-status={state.status} aria-label="Agenda">
+      <div className="w-[120px] shrink-0">
+        <p className="font-display text-[32px] leading-none font-semibold tracking-wide">Agenda</p>
       </div>
       <div className="flex min-w-0 flex-1 items-stretch gap-3 overflow-hidden">
         {agenda.items.map((item) => {
