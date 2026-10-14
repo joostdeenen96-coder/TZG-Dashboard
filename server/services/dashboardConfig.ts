@@ -41,7 +41,7 @@ const DEFAULTS: DashboardConfig = {
   },
   dashboard: {
     refreshInterval: 300,
-    aantalNieuwsitems: 3,
+    aantalNieuwsitems: 5,
   },
 };
 

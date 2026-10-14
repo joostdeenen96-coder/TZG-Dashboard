@@ -1,6 +1,6 @@
 # Teunesen TV-dashboard
 
-Volledig scherm voor de werkvloer en de kantine: waterstanden met bron-grafiek en verwachting, dieseltoeslag, weer in Gennep, WijTeunesen-nieuws en projectfoto’s. Donker industrieel thema, Nederlandse teksten, opgezet voor 2560×1440.
+Volledig scherm voor de werkvloer en de kantine: waterstanden met bron-grafiek en verwachting, dieseltoeslag, weer in Gennep en Nederlandse WijTeunesen-berichten. Donker industrieel thema, Nederlandse teksten, opgezet voor 2560×1440.
 
 ## Starten
 

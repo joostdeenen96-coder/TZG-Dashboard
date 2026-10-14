@@ -4,7 +4,6 @@ import { CardState } from "../components/CardState";
 import { DieselCard } from "../components/DieselCard";
 import { Header } from "../components/Header";
 import { NewsCard } from "../components/NewsCard";
-import { SlideshowCard } from "../components/SlideshowCard";
 import { WaterLevelCard } from "../components/WaterLevelCard";
 import { WeatherCard } from "../components/WeatherCard";
 import { WidgetBoundary } from "../components/WidgetBoundary";
@@ -93,17 +92,14 @@ export function DashboardPage() {
                 <DieselCard />
               </WidgetBoundary>
             </section>
-            <section className="grid h-[360px] shrink-0 grid-cols-[3fr_2fr] gap-4">
+            <section className="h-[360px] shrink-0">
               <WidgetBoundary title="Weerbericht">
                 <WeatherCard />
               </WidgetBoundary>
-              <WidgetBoundary title="WijTeunesen">
-                <NewsCard />
-              </WidgetBoundary>
             </section>
             <section className="min-h-0 flex-1">
-              <WidgetBoundary title="Projecten">
-                <SlideshowCard />
+              <WidgetBoundary title="WijTeunesen">
+                <NewsCard />
               </WidgetBoundary>
             </section>
             {adminOpen ? <AdminPanel authenticated={authenticated} onClose={() => setAdminOpen(false)} /> : null}

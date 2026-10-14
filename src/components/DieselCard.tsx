@@ -90,17 +90,20 @@ export function DieselCard() {
           <li
             key={`${week.peildatum}-${week.toeslagPercentage}`}
             data-week={formatWeekNumber(week.peildatum)}
-            className={`flex min-h-0 flex-col items-center justify-center rounded-xl border px-3 text-center ${
+            className={`grid min-h-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-4 rounded-xl border px-4 ${
               index === 0 ? "border-gold/45 bg-gold/8" : "border-slate/40 bg-black/25"
             }`}
           >
-            <p className="text-[12px] font-semibold tracking-[0.22em] text-mist uppercase">Dieseltoeslag</p>
-            <p className="mt-1 font-display text-[28px] leading-none font-semibold text-gold">{formatWeekNumber(week.peildatum)}</p>
-            <p className="mt-1 font-display text-[52px] leading-none font-semibold tabular-nums">
-              {formatWholePercent(week.toeslagPercentage)}
-            </p>
-            <p className="mt-1 text-[16px] leading-tight">Dieselprijs {formatPrice(week.dieselPrijs)}</p>
-            <p className="text-[15px] leading-tight text-mist">Peildatum {formatPeildatum(week.peildatum)}</p>
+            <div className="min-w-0">
+              <p className="font-display text-[26px] leading-none font-semibold text-gold">{formatWeekNumber(week.peildatum)}</p>
+              <p className="mt-1 font-display text-[54px] leading-none font-semibold tabular-nums">
+                {formatWholePercent(week.toeslagPercentage)}
+              </p>
+            </div>
+            <div className="min-w-0 text-right">
+              <p className="truncate text-[18px] leading-tight">Dieselprijs {formatPrice(week.dieselPrijs)}</p>
+              <p className="mt-1 truncate text-[16px] leading-tight text-mist">Peildatum {formatPeildatum(week.peildatum)}</p>
+            </div>
           </li>
         ))}
       </ul>
