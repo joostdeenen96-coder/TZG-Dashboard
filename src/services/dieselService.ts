@@ -36,7 +36,9 @@ function mapPayload(payload: unknown): DieselSurcharge | "empty" {
   const parsedWeeks = Array.isArray(row.weken) ? row.weken.map(mapWeek).filter((week): week is DieselWeek => week !== null) : [];
   return {
     ...current,
-    weken: (parsedWeeks.length > 0 ? parsedWeeks : [current]).slice(-5),
+    weken: (parsedWeeks.length > 0 ? parsedWeeks : [current])
+      .sort((left, right) => Date.parse(right.peildatum) - Date.parse(left.peildatum))
+      .slice(0, 4),
   };
 }
 

@@ -1,52 +1,67 @@
-import { formatAmsterdamTime, formatDutchPercent, formatEuro, formatPublicationDate } from "../lib/format";
 import { useDieselSurcharge } from "../services/dieselService";
 import type { DieselWeek } from "../types";
 import { CardState } from "./CardState";
 
-const weekLabel = new Intl.DateTimeFormat("nl-NL", {
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Amsterdam",
-  day: "numeric",
-  month: "short",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
 });
 
-function formatPeildatum(value: string) {
-  const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) return value;
-  return formatPublicationDate(value);
+const priceFormatter = new Intl.NumberFormat("nl-NL", {
+  style: "currency",
+  currency: "EUR",
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
+});
+
+function amsterdamDate(iso: string) {
+  const parsed = Date.parse(iso);
+  if (!Number.isFinite(parsed)) return null;
+  const parts = dateFormatter.formatToParts(new Date(parsed));
+  const read = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((part) => part.type === type)?.value);
+  const year = read("year");
+  const month = read("month");
+  const day = read("day");
+  if (!year || !month || !day) return null;
+  return { year, month, day };
 }
 
-function formatWeek(value: string) {
-  const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) return value;
-  return weekLabel.format(new Date(parsed));
+function isoWeekNumber(year: number, month: number, day: number) {
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const weekday = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - weekday);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
 }
 
-function WeekColumns({ weeks }: { weeks: DieselWeek[] }) {
-  const maxPercent = Math.max(...weeks.map((week) => week.toeslagPercentage), 0.1);
-  return (
-    <ul
-      className="grid h-full min-h-0 gap-2"
-      style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}
-    >
-      {weeks.map((week) => {
-        const height = Math.max(12, (week.toeslagPercentage / maxPercent) * 100);
-        return (
-          <li key={`${week.peildatum}-${week.toeslagPercentage}`} className="flex min-h-0 min-w-0 flex-col items-center">
-            <div className="flex w-full flex-1 items-end justify-center">
-              <div
-                className={`w-8 max-w-full rounded-t ${week.actief ? "bg-gold" : "bg-[#9fd0ea]/80"}`}
-                style={{ height: `${height}%` }}
-              />
-            </div>
-            <p className="mt-2 font-display text-[18px] leading-none font-semibold tabular-nums">
-              {formatDutchPercent(week.toeslagPercentage)}
-            </p>
-            <p className="mt-1 truncate text-[12px] text-mist">{formatWeek(week.peildatum)}</p>
-          </li>
-        );
-      })}
-    </ul>
-  );
+function formatPeildatum(iso: string) {
+  const date = amsterdamDate(iso);
+  if (!date) return iso;
+  return `${date.day}-${date.month}-${date.year}`;
+}
+
+function formatWeekNumber(iso: string) {
+  const date = amsterdamDate(iso);
+  if (!date) return "Week";
+  const next = new Date(Date.UTC(date.year, date.month - 1, date.day));
+  const weekday = next.getUTCDay() || 7;
+  next.setUTCDate(next.getUTCDate() + (weekday === 1 ? 7 : 8 - weekday));
+  return `Week ${isoWeekNumber(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate())}`;
+}
+
+function formatWholePercent(value: number) {
+  return `${Math.floor(value + 1e-6)}%`;
+}
+
+function formatPrice(value: number) {
+  if (value <= 0) return "geen dieselprijs";
+  return priceFormatter.format(value);
+}
+
+function newestWeeks(weeks: DieselWeek[]) {
+  return [...weeks].sort((left, right) => Date.parse(right.peildatum) - Date.parse(left.peildatum)).slice(0, 4);
 }
 
 export function DieselCard() {
@@ -62,43 +77,35 @@ export function DieselCard() {
     return <CardState status="loading" title="Dieseltoeslag" message="Toeslag laden." />;
   }
 
-  const surcharge = state.data;
-  const updated = state.fetchedAt ? formatAmsterdamTime(state.fetchedAt) : "";
-  const weeks = (surcharge.weken?.length ? surcharge.weken : [surcharge]).slice(-5);
-  const priceLabel = surcharge.dieselPrijs > 0 ? `dieselprijs ${formatEuro(surcharge.dieselPrijs)}` : "geen dieselprijs";
+  const blocks = newestWeeks(state.data.weken?.length ? state.data.weken : [state.data]);
 
   return (
-    <article className="tv-card relative flex h-full min-h-0 flex-col px-4 py-3" data-status={state.status}>
+    <article className="tv-card relative flex h-full min-h-0 flex-col px-3 py-3" data-status={state.status}>
       {state.refreshing ? <span className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-gold" aria-label="Vernieuwen" /> : null}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="truncate font-display text-[32px] leading-none font-semibold tracking-wide uppercase">
-            Dieseltoeslag
-          </h2>
-          <p className="mt-1 truncate text-[13px] font-medium tracking-[0.14em] text-mist uppercase">
-            Dieseltoeslagen Asvervoer
-          </p>
-        </div>
-        <span className="shrink-0 rounded-full border border-gold/45 bg-gold/12 px-3 py-1 text-[13px] font-semibold tracking-[0.12em] text-[#f0d078] uppercase">
-          {surcharge.actief ? "actief" : "inactief"}
-        </span>
-      </div>
-      <div className="mt-2 flex items-end justify-between gap-3">
-        <p className="flex items-end gap-2 font-display leading-none">
-          <span className="text-[64px] font-semibold tabular-nums">{formatDutchPercent(surcharge.toeslagPercentage)}</span>
-          <span className="mb-1 text-[20px] font-medium text-mist">%</span>
-        </p>
-        <p className="mb-1 text-[16px] font-medium text-paper">{priceLabel}</p>
-      </div>
-      <div className="mt-3 min-h-0 flex-1">
-        <WeekColumns weeks={weeks} />
-      </div>
-      <p className="mt-2 truncate text-[13px] text-mist">Peildatum {formatPeildatum(surcharge.peildatum)}</p>
-      {updated ? (
-        <p className={`truncate text-[13px] ${state.status === "fallback" ? "text-gold" : "text-mist"}`}>
-          {state.status === "fallback" ? "Laatste bekende gegevens · " : ""}
-          Bijgewerkt {updated}
-        </p>
+      <ul
+        className="grid min-h-0 flex-1 gap-2"
+        style={{ gridTemplateRows: `repeat(${blocks.length}, minmax(0, 1fr))` }}
+      >
+        {blocks.map((week, index) => (
+          <li
+            key={`${week.peildatum}-${week.toeslagPercentage}`}
+            data-week={formatWeekNumber(week.peildatum)}
+            className={`flex min-h-0 flex-col items-center justify-center rounded-xl border px-3 text-center ${
+              index === 0 ? "border-gold/45 bg-gold/8" : "border-slate/40 bg-black/25"
+            }`}
+          >
+            <p className="text-[12px] font-semibold tracking-[0.22em] text-mist uppercase">Dieseltoeslag</p>
+            <p className="mt-1 font-display text-[28px] leading-none font-semibold text-gold">{formatWeekNumber(week.peildatum)}</p>
+            <p className="mt-1 font-display text-[52px] leading-none font-semibold tabular-nums">
+              {formatWholePercent(week.toeslagPercentage)}
+            </p>
+            <p className="mt-1 text-[16px] leading-tight">Dieselprijs {formatPrice(week.dieselPrijs)}</p>
+            <p className="text-[15px] leading-tight text-mist">Peildatum {formatPeildatum(week.peildatum)}</p>
+          </li>
+        ))}
+      </ul>
+      {state.status === "fallback" ? (
+        <p className="mt-1 truncate text-center text-[13px] text-gold">Laatste bekende gegevens</p>
       ) : null}
     </article>
   );

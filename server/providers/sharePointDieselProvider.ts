@@ -110,7 +110,7 @@ function pickActive(records: DieselWeek[]) {
   return active[0];
 }
 
-function latestFiveWeeks(records: DieselWeek[]) {
+function latestFourWeeks(records: DieselWeek[]) {
   const byWeek = new Map<string, DieselWeek>();
   const chronological = [...records].sort((left, right) => Date.parse(left.peildatum) - Date.parse(right.peildatum));
   for (const record of chronological) {
@@ -119,12 +119,12 @@ function latestFiveWeeks(records: DieselWeek[]) {
   }
   return [...byWeek.values()]
     .sort((left, right) => Date.parse(right.peildatum) - Date.parse(left.peildatum))
-    .slice(0, 5)
+    .slice(0, 4)
     .sort((left, right) => Date.parse(left.peildatum) - Date.parse(right.peildatum));
 }
 
 function withWeeks(active: DieselWeek, records: DieselWeek[]): DieselSurcharge {
-  const weken = latestFiveWeeks(records);
+  const weken = latestFourWeeks(records);
   return { ...active, weken: weken.length > 0 ? weken : [{ ...active }] };
 }
 
