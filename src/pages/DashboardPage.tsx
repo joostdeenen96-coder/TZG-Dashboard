@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AdminPanel } from "../components/AdminPanel";
 import { CardState } from "../components/CardState";
 import { DieselCard } from "../components/DieselCard";
@@ -16,14 +16,15 @@ import { useWaterLevels } from "../services/waterLevelService";
 const STAGE_WIDTH = 2560;
 const STAGE_HEIGHT = 1440;
 
-function readScale() {
-  if (typeof window === "undefined") return 1;
-  return Math.min(window.innerWidth / STAGE_WIDTH, window.innerHeight / STAGE_HEIGHT);
+function readScale(width: number, height: number) {
+  if (width < 1 || height < 1) return 1;
+  return Math.min(width / STAGE_WIDTH, height / STAGE_HEIGHT);
 }
 
 export function DashboardPage() {
   const now = useAmsterdamNow();
-  const [scale, setScale] = useState(readScale);
+  const frame = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
   const water = useWaterLevels();
   const tv = useTvStatus();
   const authenticated = useAdminSession();
@@ -31,10 +32,22 @@ export function DashboardPage() {
   const levels = water.status === "ready" || water.status === "fallback" ? water.data : null;
 
   useEffect(() => {
-    const update = () => setScale(readScale());
+    const element = frame.current;
+    if (!element) return;
+    const update = () => {
+      const rect = element.getBoundingClientRect();
+      setScale(readScale(rect.width, rect.height));
+    };
     update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
     window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+    };
   }, []);
 
   useEffect(() => {
@@ -43,7 +56,7 @@ export function DashboardPage() {
   }, []);
 
   return (
-    <div className="grid h-screen w-screen place-items-center overflow-hidden bg-ink">
+    <div ref={frame} className="fixed inset-0 grid place-items-center overflow-hidden bg-ink">
       <div className="relative overflow-hidden" style={{ width: STAGE_WIDTH * scale, height: STAGE_HEIGHT * scale }}>
         <div
           className="absolute top-0 left-0 box-border flex h-[1440px] w-[2560px] origin-top-left flex-col gap-4 bg-ink p-5"
