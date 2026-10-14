@@ -49,6 +49,23 @@ export type WijNewsResponse = {
   error: string | null;
 };
 
+export type WijAgendaItem = {
+  id: string;
+  title: string;
+  location: string;
+  startsAt: string;
+  endsAt: string;
+  allDay: boolean;
+};
+
+export type WijAgendaResponse = {
+  site: string;
+  source: "WijTeunesen";
+  connected: boolean;
+  items: WijAgendaItem[];
+  error: string | null;
+};
+
 export type WaterLevelsResponse = Record<WaterStationId, WaterStationResult>;
 
 export type QueryState<T> =

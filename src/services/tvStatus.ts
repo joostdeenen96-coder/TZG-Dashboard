@@ -1,3 +1,4 @@
+import { useWijAgenda } from "./agendaService";
 import { useDieselSurcharge } from "./dieselService";
 import { useWijNews } from "./newsService";
 import { useWaterLevels } from "./waterLevelService";
@@ -11,7 +12,8 @@ export function useTvStatus() {
   const water = useWaterLevels();
   const diesel = useDieselSurcharge();
   const news = useWijNews();
-  const feeds = [water, diesel, news];
+  const agenda = useWijAgenda();
+  const feeds = [water, diesel, news, agenda];
   const refreshing = feeds.some((feed) => feed.refreshing);
   const anyReady = feeds.some((feed) => feed.status === "ready");
   const anyFallback = feeds.some((feed) => feed.status === "fallback");

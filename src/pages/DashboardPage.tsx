@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AdminPanel } from "../components/AdminPanel";
+import { AgendaBar } from "../components/AgendaBar";
 import { CardState } from "../components/CardState";
 import { DieselCard } from "../components/DieselCard";
 import { Header } from "../components/Header";
@@ -107,6 +108,11 @@ export function DashboardPage() {
             <section className="min-h-0 flex-1">
               <WidgetBoundary title="WijTeunesen">
                 <NewsCard />
+              </WidgetBoundary>
+            </section>
+            <section className="h-[118px] shrink-0">
+              <WidgetBoundary title="Agenda">
+                <AgendaBar />
               </WidgetBoundary>
             </section>
             {adminOpen ? <AdminPanel authenticated={authenticated} onClose={() => setAdminOpen(false)} /> : null}

@@ -133,9 +133,10 @@ Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record) e
 | Dieseltoeslag | SharePoint via Microsoft Graph, mock alleen bij een Graph-fout | live zodra de Graph-variabelen gezet zijn |
 | Weer | `src/services/dashboardService.ts` | mock, klein in de balk links van de klok. Plaatsnaam via `/admin` |
 | WijTeunesen-nieuws | `GET /api/news`, site `https://teunesen.sharepoint.com/sites/wt-nieuws` | nieuwspagina's met `PromotedState` 2 en `Nieuws taal` NL, de laatste vijftien van de hele site, inclusief Lief en leed. De categorie staat klein bij de titel. Het vlak wisselt elke 20 seconden. Een foto gaat via `GET /api/news/:id/image`. Zonder Graph-gegevens toont het scherm voorbeeldtekst |
+| WijTeunesen-agenda | `GET /api/agenda`, site `https://teunesen.sharepoint.com/sites/HR-NL`, lijst Gebeurtenissen | komende Nederlandse afspraken, dezelfde bron als het webpart “Belangrijke data” op de WijTeunesen-startpagina. De lege kalender op wt-nieuws en de Duitse lijst Events DE worden niet gelezen. De onderbalk toont ze naast elkaar |
 
 ## Permanent scherm
 
-`createPollingFeed` in `src/services/tvFeed.ts` haalt waterstanden, dieseltoeslag en nieuws op. Het interval komt uit de schermconfiguratie en is standaard 300 seconden. Een mislukte oproep bewaart de laatste geslaagde response in `localStorage` en plant een nieuwe poging na 5, 15, 30 en daarna 60 seconden. `online` start meteen opnieuw. De balk toont “Vernieuwen” zolang een feed loopt, en “Laatste update” of “Laatste bekende gegevens” met het tijdstip van de laatste geslaagde leesactie.
+`createPollingFeed` in `src/services/tvFeed.ts` haalt waterstanden, dieseltoeslag, nieuws en agenda op. Het interval komt uit de schermconfiguratie en is standaard 300 seconden. Een mislukte oproep bewaart de laatste geslaagde response in `localStorage` en plant een nieuwe poging na 5, 15, 30 en daarna 60 seconden. `online` start meteen opnieuw. De balk toont “Vernieuwen” zolang een feed loopt, en “Laatste update” of “Laatste bekende gegevens” met het tijdstip van de laatste geslaagde leesactie.
 
 Elke tegel zit in `WidgetBoundary`. Een renderfout blijft op die tegel. `ScreenGuard` houdt de achtergrond donker als de pagina zelf stopt. Logregels gebruiken het voorvoegsel `[teunesen-tv]`.
