@@ -8,6 +8,7 @@ dieselSurchargeRouter.get("/", async (_req, res) => {
     res.json(await getDieselSurcharge());
   } catch (error) {
     const message = error instanceof Error ? error.message : "Dieseltoeslag niet beschikbaar.";
+    console.error(`[teunesen-tv] ${new Date().toISOString()} error dieseltoeslag ${message}`);
     res.status(502).json({ error: message });
   }
 });

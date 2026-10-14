@@ -36,7 +36,10 @@ export function WaterChart({ series, forecast }: WaterChartProps) {
   const height = 168;
   const pad = { left: 36, right: 8, top: 10, bottom: 22 };
   const times = all.map((point) => Date.parse(point.timestamp)).filter((value) => Number.isFinite(value));
-  const levels = all.map((point) => point.levelCm);
+  const levels = all.map((point) => point.levelCm).filter((value) => Number.isFinite(value));
+  if (times.length < 2 || levels.length < 2) {
+    return <p className="px-2 text-[15px] text-mist">Geen grafiekreeks.</p>;
+  }
   const t0 = Math.min(...times);
   const t1 = Math.max(...times);
   let min = Math.min(...levels);

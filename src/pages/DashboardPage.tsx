@@ -7,10 +7,12 @@ import { NewsCard } from "../components/NewsCard";
 import { SlideshowCard } from "../components/SlideshowCard";
 import { WaterLevelCard } from "../components/WaterLevelCard";
 import { WeatherCard } from "../components/WeatherCard";
+import { WidgetBoundary } from "../components/WidgetBoundary";
 import { useAmsterdamNow } from "../hooks/useAmsterdamNow";
+import { clearScreenReloadGuard } from "../components/ScreenGuard";
 import { useAdminSession } from "../services/adminService";
+import { useTvStatus } from "../services/tvStatus";
 import { useWaterLevels } from "../services/waterLevelService";
-import type { WaterLevelsResponse } from "../types";
 
 const STAGE_WIDTH = 2560;
 const STAGE_HEIGHT = 1440;
@@ -20,26 +22,25 @@ function readScale() {
   return Math.min(window.innerWidth / STAGE_WIDTH, window.innerHeight / STAGE_HEIGHT);
 }
 
-function latestUpdatedAt(levels: WaterLevelsResponse) {
-  const stamps = [levels.kaub.updatedAt, levels.ruhrort.updatedAt, levels.maxau.updatedAt].filter(
-    (value): value is string => typeof value === "string" && value.length > 0,
-  );
-  return stamps.sort().at(-1) ?? null;
-}
-
 export function DashboardPage() {
   const now = useAmsterdamNow();
   const [scale, setScale] = useState(readScale);
   const water = useWaterLevels();
+  const tv = useTvStatus();
   const authenticated = useAdminSession();
   const [adminOpen, setAdminOpen] = useState(false);
-  const updatedAt = water.status === "ready" ? latestUpdatedAt(water.data) : null;
+  const levels = water.status === "ready" || water.status === "fallback" ? water.data : null;
 
   useEffect(() => {
     const update = () => setScale(readScale());
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => clearScreenReloadGuard(), 20_000);
+    return () => window.clearTimeout(id);
   }, []);
 
   return (
@@ -53,35 +54,57 @@ export function DashboardPage() {
           <div className="relative flex min-h-0 flex-1 flex-col gap-3">
             <Header
               now={now}
-              updatedAt={updatedAt}
+              fetchedAt={tv.fetchedAt}
+              refreshing={tv.refreshing}
+              stale={tv.stale}
               adminLabel={authenticated ? "Instellingen" : "Inloggen"}
               onAdmin={() => setAdminOpen(true)}
             />
             <section className="grid h-[640px] shrink-0 grid-cols-4 gap-4">
-              {water.status === "loading" ? (
-                <CardState className="col-span-3" status="loading" title="Waterstanden" message="Peilen worden opgehaald." />
-              ) : null}
-              {water.status === "error" ? (
-                <CardState className="col-span-3" status="error" title="Waterstanden" message={water.message} />
-              ) : null}
-              {water.status === "empty" ? (
-                <CardState className="col-span-3" status="empty" title="Waterstanden" message="Geen peilgegevens." />
-              ) : null}
-              {water.status === "ready" ? (
+              {levels ? (
                 <>
-                  <WaterLevelCard station={water.data.kaub} />
-                  <WaterLevelCard station={water.data.ruhrort} />
-                  <WaterLevelCard station={water.data.maxau} />
+                  <WidgetBoundary title={levels.kaub.name}>
+                    <WaterLevelCard station={levels.kaub} refreshing={water.refreshing} stale={water.status === "fallback"} />
+                  </WidgetBoundary>
+                  <WidgetBoundary title={levels.ruhrort.name}>
+                    <WaterLevelCard station={levels.ruhrort} refreshing={water.refreshing} stale={water.status === "fallback"} />
+                  </WidgetBoundary>
+                  <WidgetBoundary title={levels.maxau.name}>
+                    <WaterLevelCard station={levels.maxau} refreshing={water.refreshing} stale={water.status === "fallback"} />
+                  </WidgetBoundary>
                 </>
-              ) : null}
-              <DieselCard />
+              ) : (
+                <WidgetBoundary title="Waterstanden" className="col-span-3">
+                  <CardState
+                    className="h-full"
+                    status={water.status === "error" ? "error" : water.status === "empty" ? "empty" : "loading"}
+                    title="Waterstanden"
+                    message={
+                      water.status === "error"
+                        ? water.message
+                        : water.status === "empty"
+                          ? "Geen peilgegevens."
+                          : "Peilen worden opgehaald."
+                    }
+                  />
+                </WidgetBoundary>
+              )}
+              <WidgetBoundary title="Dieseltoeslag">
+                <DieselCard />
+              </WidgetBoundary>
             </section>
             <section className="grid h-[360px] shrink-0 grid-cols-[3fr_2fr] gap-4">
-              <WeatherCard />
-              <NewsCard />
+              <WidgetBoundary title="Weerbericht">
+                <WeatherCard />
+              </WidgetBoundary>
+              <WidgetBoundary title="WijTeunesen">
+                <NewsCard />
+              </WidgetBoundary>
             </section>
             <section className="min-h-0 flex-1">
-              <SlideshowCard />
+              <WidgetBoundary title="Projecten">
+                <SlideshowCard />
+              </WidgetBoundary>
             </section>
             {adminOpen ? <AdminPanel authenticated={authenticated} onClose={() => setAdminOpen(false)} /> : null}
           </div>

@@ -69,11 +69,11 @@ export function getWeather() {
 function readResult<T>(load: () => T, isEmpty: (value: T) => boolean, emptyMessage: string): QueryState<T> {
   try {
     const data = load();
-    if (isEmpty(data)) return { status: "empty" };
-    return { status: "ready", data };
+    if (isEmpty(data)) return { status: "empty", refreshing: false, fetchedAt: null };
+    return { status: "ready", data, refreshing: false, fetchedAt: new Date().toISOString() };
   } catch (error) {
     const message = error instanceof Error ? error.message : emptyMessage;
-    return { status: "error", message };
+    return { status: "error", message, refreshing: false, fetchedAt: null };
   }
 }
 

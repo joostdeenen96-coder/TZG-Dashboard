@@ -50,10 +50,11 @@ export type WijNewsResponse = {
 export type WaterLevelsResponse = Record<WaterStationId, WaterStationResult>;
 
 export type QueryState<T> =
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "empty" }
-  | { status: "ready"; data: T };
+  | { status: "loading"; refreshing: boolean; fetchedAt: string | null }
+  | { status: "error"; message: string; refreshing: boolean; fetchedAt: string | null }
+  | { status: "empty"; refreshing: boolean; fetchedAt: string | null }
+  | { status: "ready"; data: T; refreshing: boolean; fetchedAt: string | null }
+  | { status: "fallback"; data: T; message: string; refreshing: boolean; fetchedAt: string | null };
 
 export type DieselWeek = {
   peildatum: string;

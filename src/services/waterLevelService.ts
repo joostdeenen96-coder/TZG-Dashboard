@@ -1,6 +1,5 @@
 import { useSyncExternalStore } from "react";
 import type {
-  QueryState,
   WaterForecastPoint,
   WaterLevelsResponse,
   WaterPoint,
@@ -10,7 +9,7 @@ import type {
   WaterTrend,
 } from "../types";
 
-import { getRefreshMs } from "./dashboardConfigService";
+import { createPollingFeed } from "./tvFeed";
 
 const WATER_LEVELS_PATH = "/api/waterlevels";
 
@@ -19,21 +18,6 @@ const stationNames: Record<WaterStationId, string> = {
   ruhrort: "Ruhrort",
   maxau: "Maxau",
 };
-
-type WaterSnapshot = QueryState<WaterLevelsResponse>;
-
-let snapshot: WaterSnapshot = { status: "loading" };
-const listeners = new Set<() => void>();
-let refreshTimer = 0;
-
-function publish(next: WaterSnapshot) {
-  snapshot = next;
-  for (const listener of listeners) listener();
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
 
 function isTrend(value: unknown): value is WaterTrend {
   return value === "stijgend" || value === "dalend" || value === "gelijk";
@@ -138,46 +122,29 @@ function mapPayload(payload: unknown): WaterLevelsResponse | "empty" {
   };
 }
 
-async function loadWaterLevels() {
-  const keepReady = snapshot.status === "ready" ? snapshot : null;
-  let lastError = "Waterstanden niet bereikbaar.";
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    try {
-      const response = await fetch(WATER_LEVELS_PATH);
-      if (!response.ok) throw new Error(`Waterstanden antwoordden met ${response.status}.`);
-      const mapped = mapPayload(await response.json());
-      if (mapped === "empty") publish({ status: "empty" });
-      else publish({ status: "ready", data: mapped });
-      return;
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : lastError;
-      await delay(200);
-    }
+async function loadWaterLevels(signal: AbortSignal): Promise<WaterLevelsResponse | "empty"> {
+  const response = await fetch(WATER_LEVELS_PATH, { signal });
+  if (!response.ok) throw new Error(`Waterstanden antwoordden met ${response.status}.`);
+  return mapPayload(await response.json());
+}
+
+function acceptWater(value: unknown): WaterLevelsResponse | null {
+  try {
+    const mapped = mapPayload(value);
+    return mapped === "empty" ? null : mapped;
+  } catch {
+    return null;
   }
-  if (keepReady) publish(keepReady);
-  else publish({ status: "error", message: lastError });
 }
 
-function ensureRefresh() {
-  if (refreshTimer) return;
-  const tick = () => {
-    refreshTimer = window.setTimeout(() => {
-      void loadWaterLevels().finally(tick);
-    }, getRefreshMs());
-  };
-  tick();
-}
-
-void loadWaterLevels();
-ensureRefresh();
+const waterFeed = createPollingFeed<WaterLevelsResponse>({
+  name: "waterstanden",
+  storageKey: "teunesen.tv.water.v1",
+  unavailable: "Waterstanden niet bereikbaar.",
+  load: loadWaterLevels,
+  accept: acceptWater,
+});
 
 export function useWaterLevels() {
-  return useSyncExternalStore(
-    (onStoreChange) => {
-      listeners.add(onStoreChange);
-      return () => listeners.delete(onStoreChange);
-    },
-    () => snapshot,
-    () => snapshot,
-  );
+  return useSyncExternalStore(waterFeed.subscribe, waterFeed.getSnapshot, waterFeed.getSnapshot);
 }

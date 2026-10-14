@@ -1,24 +1,9 @@
 import { useSyncExternalStore } from "react";
-import type { QueryState, WijNewsItem, WijNewsResponse } from "../types";
+import type { WijNewsItem, WijNewsResponse } from "../types";
 
-import { getRefreshMs } from "./dashboardConfigService";
+import { createPollingFeed } from "./tvFeed";
 
 const NEWS_PATH = "/api/news";
-
-type NewsSnapshot = QueryState<WijNewsResponse>;
-
-let snapshot: NewsSnapshot = { status: "loading" };
-const listeners = new Set<() => void>();
-let refreshTimer = 0;
-
-function publish(next: NewsSnapshot) {
-  snapshot = next;
-  for (const listener of listeners) listener();
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
 
 function text(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -50,44 +35,28 @@ function mapPayload(payload: unknown): WijNewsResponse {
   };
 }
 
-async function loadNews() {
-  const keepReady = snapshot.status === "ready" ? snapshot : null;
-  let lastError = "WijTeunesen-nieuws niet bereikbaar.";
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    try {
-      const response = await fetch(NEWS_PATH);
-      if (!response.ok) throw new Error(`Nieuws antwoordde met ${response.status}.`);
-      publish({ status: "ready", data: mapPayload(await response.json()) });
-      return;
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : lastError;
-      await delay(200);
-    }
+async function loadNews(signal: AbortSignal): Promise<WijNewsResponse | "empty"> {
+  const response = await fetch(NEWS_PATH, { signal });
+  if (!response.ok) throw new Error(`Nieuws antwoordde met ${response.status}.`);
+  return mapPayload(await response.json());
+}
+
+function acceptNews(value: unknown): WijNewsResponse | null {
+  try {
+    return mapPayload(value);
+  } catch {
+    return null;
   }
-  if (keepReady) publish(keepReady);
-  else publish({ status: "error", message: lastError });
 }
 
-function ensureRefresh() {
-  if (refreshTimer) return;
-  const tick = () => {
-    refreshTimer = window.setTimeout(() => {
-      void loadNews().finally(tick);
-    }, getRefreshMs());
-  };
-  tick();
-}
-
-void loadNews();
-ensureRefresh();
+const newsFeed = createPollingFeed<WijNewsResponse>({
+  name: "nieuws",
+  storageKey: "teunesen.tv.news.v1",
+  unavailable: "WijTeunesen-nieuws niet bereikbaar.",
+  load: loadNews,
+  accept: acceptNews,
+});
 
 export function useWijNews() {
-  return useSyncExternalStore(
-    (onStoreChange) => {
-      listeners.add(onStoreChange);
-      return () => listeners.delete(onStoreChange);
-    },
-    () => snapshot,
-    () => snapshot,
-  );
+  return useSyncExternalStore(newsFeed.subscribe, newsFeed.getSnapshot, newsFeed.getSnapshot);
 }

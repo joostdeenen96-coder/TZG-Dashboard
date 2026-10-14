@@ -6,6 +6,8 @@ import { WaterChart } from "./WaterChart";
 
 type WaterLevelCardProps = {
   station: WaterStationResult;
+  refreshing?: boolean;
+  stale?: boolean;
 };
 
 const dayLabel = new Intl.DateTimeFormat("nl-NL", {
@@ -38,7 +40,7 @@ function dailyForecast(points: WaterForecastPoint[]) {
   return [...byDay.values()].slice(0, 5);
 }
 
-export function WaterLevelCard({ station }: WaterLevelCardProps) {
+export function WaterLevelCard({ station, refreshing = false, stale = false }: WaterLevelCardProps) {
   if (!isReady(station)) {
     return <CardState status="error" title={station.name} message={station.error ?? "Peil niet beschikbaar."} />;
   }
@@ -47,7 +49,8 @@ export function WaterLevelCard({ station }: WaterLevelCardProps) {
   const days = dailyForecast(station.forecast);
 
   return (
-    <article className="tv-card flex h-full min-h-0 flex-col px-4 py-3">
+    <article className="tv-card relative flex h-full min-h-0 flex-col px-4 py-3" data-status={stale ? "fallback" : "ready"}>
+      {refreshing ? <span className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-gold" aria-label="Vernieuwen" /> : null}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate font-display text-[32px] leading-none font-semibold tracking-wide uppercase">
@@ -87,7 +90,8 @@ export function WaterLevelCard({ station }: WaterLevelCardProps) {
         </ul>
       ) : null}
       {station.forecastError ? <p className="mt-1 truncate text-[13px] text-mist">{station.forecastError}</p> : null}
-      <p className="mt-1 truncate text-[13px] text-mist">
+      <p className={`mt-1 truncate text-[13px] ${stale ? "text-gold" : "text-mist"}`}>
+        {stale ? "Laatste bekende gegevens · " : ""}
         Bijgewerkt {formatAmsterdamTime(station.updatedAt)} · {station.source}
       </p>
     </article>

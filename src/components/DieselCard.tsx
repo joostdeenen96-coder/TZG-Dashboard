@@ -1,4 +1,4 @@
-import { formatDutchPercent, formatEuro, formatPublicationDate } from "../lib/format";
+import { formatAmsterdamTime, formatDutchPercent, formatEuro, formatPublicationDate } from "../lib/format";
 import { useDieselSurcharge } from "../services/dieselService";
 import type { DieselWeek } from "../types";
 import { CardState } from "./CardState";
@@ -58,16 +58,18 @@ export function DieselCard() {
   if (state.status === "empty") {
     return <CardState status="empty" title="Dieseltoeslag" message="Geen toeslag beschikbaar." />;
   }
-  if (state.status !== "ready") {
+  if (state.status !== "ready" && state.status !== "fallback") {
     return <CardState status="loading" title="Dieseltoeslag" message="Toeslag laden." />;
   }
 
   const surcharge = state.data;
+  const updated = state.fetchedAt ? formatAmsterdamTime(state.fetchedAt) : "";
   const weeks = (surcharge.weken?.length ? surcharge.weken : [surcharge]).slice(-5);
   const priceLabel = surcharge.dieselPrijs > 0 ? `dieselprijs ${formatEuro(surcharge.dieselPrijs)}` : "geen dieselprijs";
 
   return (
-    <article className="tv-card flex h-full min-h-0 flex-col px-4 py-3">
+    <article className="tv-card relative flex h-full min-h-0 flex-col px-4 py-3" data-status={state.status}>
+      {state.refreshing ? <span className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-gold" aria-label="Vernieuwen" /> : null}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate font-display text-[32px] leading-none font-semibold tracking-wide uppercase">
@@ -92,6 +94,12 @@ export function DieselCard() {
         <WeekColumns weeks={weeks} />
       </div>
       <p className="mt-2 truncate text-[13px] text-mist">Peildatum {formatPeildatum(surcharge.peildatum)}</p>
+      {updated ? (
+        <p className={`truncate text-[13px] ${state.status === "fallback" ? "text-gold" : "text-mist"}`}>
+          {state.status === "fallback" ? "Laatste bekende gegevens · " : ""}
+          Bijgewerkt {updated}
+        </p>
+      ) : null}
     </article>
   );
 }

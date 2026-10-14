@@ -1,24 +1,9 @@
 import { useSyncExternalStore } from "react";
-import type { DieselSurcharge, DieselWeek, QueryState } from "../types";
+import type { DieselSurcharge, DieselWeek } from "../types";
 
-import { getRefreshMs } from "./dashboardConfigService";
+import { createPollingFeed } from "./tvFeed";
 
 const DIESEL_PATH = "/api/dieselsurcharge";
-
-type DieselSnapshot = QueryState<DieselSurcharge>;
-
-let snapshot: DieselSnapshot = { status: "loading" };
-const listeners = new Set<() => void>();
-let refreshTimer = 0;
-
-function publish(next: DieselSnapshot) {
-  snapshot = next;
-  for (const listener of listeners) listener();
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
 
 function mapWeek(value: unknown): DieselWeek | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -55,53 +40,36 @@ function mapPayload(payload: unknown): DieselSurcharge | "empty" {
   };
 }
 
-async function loadDiesel() {
-  const keepReady = snapshot.status === "ready" ? snapshot : null;
-  let lastError = "Dieseltoeslag niet bereikbaar.";
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    try {
-      const response = await fetch(DIESEL_PATH);
-      const payload: unknown = await response.json().catch(() => null);
-      if (!response.ok) {
-        const message =
-          payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string"
-            ? payload.error
-            : `Dieseltoeslag antwoordde met ${response.status}.`;
-        throw new Error(message);
-      }
-      const mapped = mapPayload(payload);
-      if (mapped === "empty") publish({ status: "empty" });
-      else publish({ status: "ready", data: mapped });
-      return;
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : lastError;
-      await delay(200);
-    }
+async function loadDiesel(signal: AbortSignal): Promise<DieselSurcharge | "empty"> {
+  const response = await fetch(DIESEL_PATH, { signal });
+  const payload: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message =
+      payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string"
+        ? payload.error
+        : `Dieseltoeslag antwoordde met ${response.status}.`;
+    throw new Error(message);
   }
-  if (keepReady) publish(keepReady);
-  else publish({ status: "error", message: lastError });
+  return mapPayload(payload);
 }
 
-function ensureRefresh() {
-  if (refreshTimer) return;
-  const tick = () => {
-    refreshTimer = window.setTimeout(() => {
-      void loadDiesel().finally(tick);
-    }, getRefreshMs());
-  };
-  tick();
+function acceptDiesel(value: unknown): DieselSurcharge | null {
+  try {
+    const mapped = mapPayload(value);
+    return mapped === "empty" ? null : mapped;
+  } catch {
+    return null;
+  }
 }
 
-void loadDiesel();
-ensureRefresh();
+const dieselFeed = createPollingFeed<DieselSurcharge>({
+  name: "dieseltoeslag",
+  storageKey: "teunesen.tv.diesel.v1",
+  unavailable: "Dieseltoeslag niet bereikbaar.",
+  load: loadDiesel,
+  accept: acceptDiesel,
+});
 
 export function useDieselSurcharge() {
-  return useSyncExternalStore(
-    (onStoreChange) => {
-      listeners.add(onStoreChange);
-      return () => listeners.delete(onStoreChange);
-    },
-    () => snapshot,
-    () => snapshot,
-  );
+  return useSyncExternalStore(dieselFeed.subscribe, dieselFeed.getSnapshot, dieselFeed.getSnapshot);
 }

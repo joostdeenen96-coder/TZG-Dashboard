@@ -16,7 +16,7 @@ const icons = {
 export function CardState({ status, title, message, className = "" }: CardStateProps) {
   const Icon = icons[status];
   return (
-    <div className={`tv-card flex h-full min-h-0 items-center gap-4 px-6 ${className}`}>
+    <div className={`tv-card flex h-full min-h-0 items-center gap-4 px-6 ${className}`} data-status={status}>
       <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-slate/40 bg-black/30 text-gold">
         <Icon className={`h-6 w-6 ${status === "loading" ? "animate-spin" : ""}`} strokeWidth={2.1} />
       </span>

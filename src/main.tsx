@@ -9,9 +9,20 @@ import "@fontsource/source-sans-3/latin-600.css";
 import "@fontsource/source-sans-3/latin-700.css";
 import "./index.css";
 import App from "./App.tsx";
+import { ScreenGuard } from "./components/ScreenGuard.tsx";
+import { installTvGuards, tvLog } from "./services/tvLog.ts";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+installTvGuards();
+
+const root = document.getElementById("root");
+if (!root) {
+  tvLog("error", "scherm", "Root ontbreekt.");
+} else {
+  createRoot(root).render(
+    <StrictMode>
+      <ScreenGuard>
+        <App />
+      </ScreenGuard>
+    </StrictMode>,
+  );
+}

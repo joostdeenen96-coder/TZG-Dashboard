@@ -1,6 +1,6 @@
 import { Newspaper } from "lucide-react";
 import { motion } from "framer-motion";
-import { formatPublicationDate } from "../lib/format";
+import { formatAmsterdamTime, formatPublicationDate } from "../lib/format";
 import { useScreenConfig } from "../services/dashboardConfigService";
 import { useWijNews } from "../services/newsService";
 import type { WijNewsItem } from "../types";
@@ -29,15 +29,10 @@ const previews: WijNewsItem[] = [
 
 function Preview({ item, sample }: { item: WijNewsItem; sample: boolean }) {
   return (
-    <li className="min-h-0 rounded-xl border border-slate/30 bg-black/20 px-4 py-3">
-      <p className="text-[12px] font-semibold tracking-[0.16em] text-gold uppercase">
-        {sample ? "Voorbeeld" : "WijTeunesen"}
-      </p>
-      <p className="mt-1 truncate text-[18px] leading-tight font-semibold">{item.title}</p>
-      <p className="mt-1 line-clamp-2 text-[15px] leading-snug text-mist">{item.summary}</p>
-      {item.publishedAt ? (
-        <p className="mt-1 text-[13px] text-mist">{formatPublicationDate(item.publishedAt)}</p>
-      ) : null}
+    <li className="flex min-h-0 flex-col justify-center overflow-hidden rounded-xl border border-slate/30 bg-black/20 px-4">
+      <p className="truncate text-[18px] leading-tight font-semibold">{item.title}</p>
+      <p className="truncate text-[15px] leading-snug text-mist">{item.summary}</p>
+      <p className="truncate text-[13px] text-mist">{sample ? "Voorbeeld" : formatPublicationDate(item.publishedAt)}</p>
     </li>
   );
 }
@@ -48,7 +43,7 @@ export function NewsCard() {
   if (state.status === "error") {
     return <CardState status="error" title="WijTeunesen" message={state.message} />;
   }
-  if (state.status !== "ready") {
+  if (state.status !== "ready" && state.status !== "fallback") {
     return <CardState status="loading" title="WijTeunesen" message="Nieuws laden." />;
   }
 
@@ -57,7 +52,8 @@ export function NewsCard() {
 
   return (
     <motion.article
-      className="tv-card flex h-full min-h-0 flex-col px-5 py-4"
+      className="tv-card relative flex h-full min-h-0 flex-col px-5 py-4"
+      data-status={state.status}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.14, ease: "easeOut" }}
@@ -69,10 +65,17 @@ export function NewsCard() {
           </span>
           <div className="min-w-0">
             <h2 className="font-display text-[32px] leading-none font-semibold tracking-wide uppercase">WijTeunesen</h2>
-            <p className="mt-1 truncate text-[14px] text-mist">sites/wt-nieuws</p>
+            <p className={`mt-1 truncate text-[14px] ${state.status === "fallback" ? "text-gold" : "text-mist"}`}>
+              {state.status === "fallback"
+                ? `Laatste bekende gegevens${state.fetchedAt ? ` · ${formatAmsterdamTime(state.fetchedAt)}` : ""}`
+                : state.fetchedAt
+                  ? `Bijgewerkt ${formatAmsterdamTime(state.fetchedAt)}`
+                  : "sites/wt-nieuws"}
+            </p>
           </div>
         </div>
       </div>
+      {state.refreshing ? <span className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-gold" aria-label="Vernieuwen" /> : null}
       {state.data.error ? <p className="mt-2 text-[14px] text-mist">{state.data.error}</p> : null}
       <ul
         className="mt-3 grid min-h-0 flex-1 gap-2"

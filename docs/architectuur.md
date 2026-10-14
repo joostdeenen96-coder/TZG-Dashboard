@@ -131,3 +131,9 @@ Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record), 
 | Dieseltoeslag | SharePoint via Microsoft Graph, mock alleen bij een Graph-fout | live zodra de Graph-variabelen gezet zijn |
 | Weer, projectfoto’s | `src/services/dashboardService.ts` | mock, geen externe site |
 | WijTeunesen-nieuws | `GET /api/news`, site `https://teunesen.sharepoint.com/sites/wt-nieuws` | alleen `promotionKind = newsPost` op die site. Zonder Graph-gegevens blijft de lijst leeg en toont het scherm voorbeeldkaarten |
+
+## Permanent scherm
+
+`createPollingFeed` in `src/services/tvFeed.ts` haalt waterstanden, dieseltoeslag en nieuws op. Het interval komt uit de schermconfiguratie en is standaard 300 seconden. Een mislukte oproep bewaart de laatste geslaagde response in `localStorage` en plant een nieuwe poging na 5, 15, 30 en daarna 60 seconden. `online` start meteen opnieuw. De balk toont “Vernieuwen” zolang een feed loopt, en “Laatste update” of “Laatste bekende gegevens” met het tijdstip van de laatste geslaagde leesactie.
+
+Elke tegel zit in `WidgetBoundary`. Een renderfout blijft op die tegel. `ScreenGuard` houdt de achtergrond donker als de pagina zelf stopt. Logregels gebruiken het voorvoegsel `[teunesen-tv]`.
