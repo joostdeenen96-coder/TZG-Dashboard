@@ -37,6 +37,7 @@ export type WijNewsItem = {
   title: string;
   summary: string;
   publishedAt: string;
+  imagePath: string | null;
 };
 
 export type WijNewsResponse = {

@@ -7,10 +7,27 @@ export type WijNewsItem = {
   title: string;
   summary: string;
   publishedAt: string;
+  imagePath: string | null;
 };
+
+export type StoredNewsImage =
+  | { kind: "cdn"; url: string }
+  | { kind: "sharepoint"; fileUrl: string };
+
+const NEWS_LIMIT = 5;
+const CDN_HOST = "cdn.hubblecontent.osi.office.net";
+
+let images = new Map<string, StoredNewsImage>();
+let pending: Promise<WijNewsItem[]> | null = null;
 
 export function resetWijNewsCache() {
   resetGraphCache();
+  images = new Map();
+  pending = null;
+}
+
+export function storedNewsImage(id: string) {
+  return images.get(id) ?? null;
 }
 
 function asObject(value: unknown, message: string) {
@@ -18,120 +35,53 @@ function asObject(value: unknown, message: string) {
   return value as Record<string, unknown>;
 }
 
-async function graphList(url: URL) {
-  const rows: Record<string, unknown>[] = [];
-  let next: URL | null = url;
-  for (let page = 0; page < 4 && next; page += 1) {
-    const payload = asObject(await graphGet(next), "Nieuwspagina's zijn ongeldig.");
-    if (!Array.isArray(payload.value)) throw new Error("Nieuwspagina's zijn ongeldig.");
-    for (const item of payload.value) rows.push(asObject(item, "Nieuwspagina is ongeldig."));
-    next = typeof payload["@odata.nextLink"] === "string" ? new URL(payload["@odata.nextLink"]) : null;
-    if (next && next.origin !== "https://graph.microsoft.com") throw new Error("Onverwachte Graph-vervolgkoppeling.");
-  }
-  return rows;
+function textField(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
-function plainText(value: unknown, limit = 280) {
+function plainText(value: unknown, limit = 420) {
   if (typeof value !== "string") return "";
-  return value
+  const cleaned = value
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, limit);
-}
-
-const DUTCH_MARKERS = [
-  "\\bde\\b",
-  "\\bhet\\b",
-  "\\been\\b",
-  "\\bvan\\b",
-  "\\bwij\\b",
-  "\\bheeft\\b",
-  "\\bhebben\\b",
-  "\\bstelt zich\\b",
-  "\\bis geboren\\b",
-  "\\bhoning\\b",
-  "\\blaatste\\b",
-  "\\bjarig\\b",
-  "\\bik ben\\b",
-  "\\bmijn\\b",
-  "\\bgefeliciteerd\\b",
-  "\\bcollega'?s?\\b",
-  "\\buit\\b",
-  "\\bfoto's\\b",
-  "\\bfoto’s\\b",
-  "\\bbijgevoegde\\b",
-];
-
-const GERMAN_MARKERS = [
-  "\\bund\\b",
-  "\\bder\\b",
-  "\\bdie\\b",
-  "\\bdas\\b",
-  "\\bfür\\b",
-  "\\baus\\b",
-  "\\bwir\\b",
-  "\\bstellt sich\\b",
-  "\\bist geboren\\b",
-  "\\bhonig\\b",
-  "\\bfotos\\b",
-  "\\bletzte[rn]\\b",
-  "\\bjähr\\w*",
-  "\\bkolleginnen\\b",
-  "\\bjahre\\b",
-  "\\bich bin\\b",
-  "\\bmein\\b",
-  "\\bherzlich\\b",
-  "\\banfang\\b",
-  "\\bmitarbeiter\\b",
-];
-
-function markerScore(text: string, markers: string[]) {
-  let score = 0;
-  for (const marker of markers) score += text.match(new RegExp(marker, "gi"))?.length ?? 0;
-  return score;
-}
-
-export function isDutchNews(title: string, summary: string) {
-  const text = `${title} ${summary}`.toLowerCase();
-  const dutch = markerScore(text, DUTCH_MARKERS);
-  const german = markerScore(text, GERMAN_MARKERS);
-  return dutch > german && dutch > 0;
+    .trim();
+  if (cleaned.length <= limit) return cleaned;
+  const cut = cleaned.slice(0, limit);
+  const word = cut.lastIndexOf(" ");
+  const end = word > 80 ? word : limit;
+  return `${cut.slice(0, end).trim()}…`;
 }
 
 function odataText(value: string) {
   return value.replaceAll("'", "''");
 }
 
-function isWijNews(item: Record<string, unknown>, siteUrl: string) {
-  if (item.promotionKind !== "newsPost") return false;
-  if (typeof item.title !== "string" || !item.title.trim()) return false;
-  const sitePath = new URL(siteUrl).pathname.replace(/\/$/, "").toLowerCase();
-  if (typeof item.webUrl === "string") {
-    try {
-      const url = new URL(item.webUrl);
-      if (url.hostname !== new URL(siteUrl).hostname) return false;
-      if (!url.pathname.toLowerCase().startsWith(sitePath)) return false;
-    } catch {
-      return false;
-    }
-  }
-  return true;
+function nextGraphLink(payload: Record<string, unknown>) {
+  if (typeof payload["@odata.nextLink"] !== "string") return null;
+  const next = new URL(payload["@odata.nextLink"]);
+  if (next.origin !== "https://graph.microsoft.com") throw new Error("Onverwachte Graph-vervolgkoppeling.");
+  return next;
 }
 
 async function openNewsLibrary(siteUrl: string, bibliotheek: string) {
   const site = asObject(await graphGet(graphUrl(sharePointGraphPath(siteUrl))), "Nieuwssite is ongeldig.");
   if (typeof site.id !== "string") throw new Error("Nieuwssite niet gevonden.");
-  const lists = await graphList(
-    graphUrl(`/sites/${site.id}/lists`, {
-      $select: "id,displayName",
-      $filter: `displayName eq '${odataText(bibliotheek)}'`,
-    }),
+  const payload = asObject(
+    await graphGet(
+      graphUrl(`/sites/${site.id}/lists`, {
+        $select: "id,displayName",
+        $filter: `displayName eq '${odataText(bibliotheek)}'`,
+      }),
+    ),
+    "Nieuwspagina's zijn ongeldig.",
   );
-  const library = lists.find((item) => item.displayName === bibliotheek);
+  if (!Array.isArray(payload.value)) throw new Error("Nieuwspagina's zijn ongeldig.");
+  const library = payload.value
+    .map((item) => asObject(item, "Nieuwspagina is ongeldig."))
+    .find((item) => item.displayName === bibliotheek);
   if (!library || typeof library.id !== "string") throw new Error(`Bibliotheek ${bibliotheek} niet gevonden.`);
-  return { siteId: site.id, libraryName: bibliotheek };
+  return { siteId: site.id, libraryId: library.id, libraryName: bibliotheek };
 }
 
 export async function testNewsLibrary(siteUrl?: string, bibliotheek?: string) {
@@ -143,63 +93,140 @@ export async function testNewsLibrary(siteUrl?: string, bibliotheek?: string) {
   return `Nieuws: bibliotheek ${found.libraryName} gevonden.`;
 }
 
-function toItem(item: Record<string, unknown>): WijNewsItem {
-  const published = typeof item.createdDateTime === "string" ? item.createdDateTime : item.lastModifiedDateTime;
-  if (typeof item.id !== "string" || typeof item.title !== "string" || typeof published !== "string") {
-    throw new Error("Nieuwspagina mist titel of datum.");
-  }
-  return {
-    id: item.id,
-    title: item.title.trim(),
-    summary: plainText(item.description) || plainText(item.title),
-    publishedAt: published,
-  };
+type DutchRow = {
+  id: string;
+  title: string;
+  file: string;
+  publishedAt: string;
+};
+
+function isPromoted(value: unknown) {
+  return value === 2 || value === "2";
 }
 
-const DUTCH_NEWS_LIMIT = 5;
-
-async function readPagesUntilDutch(siteId: string, siteUrl: string) {
-  const pages: Record<string, unknown>[] = [];
-  let next: URL | null = graphUrl(`/sites/${siteId}/pages`, { $top: "25", $orderby: "lastModifiedDateTime desc" });
-  for (let page = 0; page < 4 && next; page += 1) {
-    let payload: Record<string, unknown>;
-    try {
-      payload = asObject(await graphGet(next), "Nieuwspagina's zijn ongeldig.");
-    } catch (error) {
-      if (page > 0) break;
-      const message = error instanceof Error ? error.message : "sortering mislukt";
-      console.error(`Sortering van WijTeunesen-pagina's mislukt (${message}).`);
-      payload = asObject(await graphGet(graphUrl(`/sites/${siteId}/pages`, { $top: "25" })), "Nieuwspagina's zijn ongeldig.");
-    }
+async function readDutchRows(siteId: string, libraryId: string) {
+  const rows: DutchRow[] = [];
+  let next: URL | null = graphUrl(`/sites/${siteId}/lists/${libraryId}/items`, {
+    $expand: "fields($select=Title,Nieuws_x0020_taal,PromotedState,Created,FirstPublishedDate,FileLeafRef)",
+    $orderby: "lastModifiedDateTime desc",
+    $top: "25",
+  });
+  for (let page = 0; page < 3 && next; page += 1) {
+    const payload = asObject(await graphGet(next), "Nieuwspagina's zijn ongeldig.");
     if (!Array.isArray(payload.value)) throw new Error("Nieuwspagina's zijn ongeldig.");
-    for (const item of payload.value) pages.push(asObject(item, "Nieuwspagina is ongeldig."));
-    const dutch = pages.filter(
-      (item) =>
-        isWijNews(item, siteUrl) &&
-        isDutchNews(typeof item.title === "string" ? item.title : "", plainText(item.description, 600)),
-    );
-    if (dutch.length >= DUTCH_NEWS_LIMIT) break;
-    next = typeof payload["@odata.nextLink"] === "string" ? new URL(payload["@odata.nextLink"]) : null;
-    if (next && next.origin !== "https://graph.microsoft.com") throw new Error("Onverwachte Graph-vervolgkoppeling.");
+    for (const item of payload.value) {
+      const row = asObject(item, "Nieuwspagina is ongeldig.");
+      const fields = asObject(row.fields, "Nieuwspagina mist velden.");
+      if (!isPromoted(fields.PromotedState) || fields.Nieuws_x0020_taal !== "NL") continue;
+      const title = textField(fields.Title);
+      const file = textField(fields.FileLeafRef);
+      const publishedAt = textField(fields.FirstPublishedDate) || textField(fields.Created);
+      const id = textField(row.id);
+      if (!title || !file || !publishedAt || !id) continue;
+      rows.push({ id, title, file, publishedAt });
+    }
+    if (rows.length >= NEWS_LIMIT) break;
+    next = nextGraphLink(payload);
   }
-  return pages;
+  return rows.sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt)).slice(0, NEWS_LIMIT);
 }
 
-export async function readWijNews(): Promise<WijNewsItem[]> {
+async function readPages(siteId: string, names: Set<string>) {
+  const byName = new Map<string, Record<string, unknown>>();
+  let next: URL | null = graphUrl(`/sites/${siteId}/pages`, {
+    $top: "25",
+    $orderby: "lastModifiedDateTime desc",
+  });
+  for (let page = 0; page < 3 && next && byName.size < names.size; page += 1) {
+    const payload = asObject(await graphGet(next), "Nieuwspagina's zijn ongeldig.");
+    if (!Array.isArray(payload.value)) throw new Error("Nieuwspagina's zijn ongeldig.");
+    for (const item of payload.value) {
+      const row = asObject(item, "Nieuwspagina is ongeldig.");
+      if (typeof row.name === "string" && names.has(row.name)) byName.set(row.name, row);
+    }
+    next = nextGraphLink(payload);
+  }
+  return byName;
+}
+
+function cdnUrl(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:" && url.hostname === CDN_HOST) return url.toString();
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function sharePointFileUrl(thumbnail: string, siteUrl: string) {
+  let url: URL;
+  let site: URL;
+  try {
+    url = new URL(thumbnail);
+    site = new URL(siteUrl);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" || url.hostname !== site.hostname) return null;
+  let pathname = url.pathname;
+  if (pathname.toLowerCase().endsWith("/getpreview.ashx")) {
+    const raw = url.searchParams.get("path");
+    if (!raw || !raw.startsWith("/")) return null;
+    pathname = raw;
+  }
+  const prefix = `${site.pathname.replace(/\/$/, "")}/SiteAssets/`;
+  if (!pathname.toLowerCase().startsWith(prefix.toLowerCase()) || pathname.includes("..")) return null;
+  const file = new URL(site.origin);
+  file.pathname = pathname;
+  return file.toString();
+}
+
+function rememberImage(id: string, thumbnail: unknown, siteUrl: string, next: Map<string, StoredNewsImage>) {
+  if (!/^[A-Za-z0-9-]{1,80}$/.test(id) || typeof thumbnail !== "string" || !thumbnail.trim()) return false;
+  const cdn = cdnUrl(thumbnail);
+  if (cdn) {
+    next.set(id, { kind: "cdn", url: cdn });
+    return true;
+  }
+  const fileUrl = sharePointFileUrl(thumbnail, siteUrl);
+  if (!fileUrl) return false;
+  next.set(id, { kind: "sharepoint", fileUrl });
+  return true;
+}
+
+async function loadWijNews(): Promise<WijNewsItem[]> {
   const config = getDashboardConfig();
   const siteUrl = config.sharepointNieuws.siteUrl;
-  const site = asObject(await graphGet(graphUrl(sharePointGraphPath(siteUrl))), "WijTeunesen-site is ongeldig.");
-  if (typeof site.id !== "string") throw new Error("WijTeunesen-site niet gevonden.");
-  const pages = await readPagesUntilDutch(site.id, siteUrl);
-  return pages
-    .filter(
-      (item) =>
-        isWijNews(item, siteUrl) &&
-        isDutchNews(typeof item.title === "string" ? item.title : "", plainText(item.description, 600)),
-    )
-    .map(toItem)
-    .sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt))
-    .slice(0, DUTCH_NEWS_LIMIT);
+  const library = await openNewsLibrary(siteUrl, config.sharepointNieuws.bibliotheek);
+  const rows = await readDutchRows(library.siteId, library.libraryId);
+  const pages = await readPages(library.siteId, new Set(rows.map((row) => row.file)));
+  const nextImages = new Map<string, StoredNewsImage>();
+  const items = rows.map((row) => {
+    const page = pages.get(row.file);
+    const id = page && typeof page.id === "string" && /^[A-Za-z0-9-]{1,80}$/.test(page.id) ? page.id : row.id;
+    const hasImage = page ? rememberImage(id, page.thumbnailWebUrl, siteUrl, nextImages) : false;
+    const summary = plainText(page?.description) || row.title;
+    return {
+      id,
+      title: row.title,
+      summary,
+      publishedAt: row.publishedAt,
+      imagePath: hasImage ? `/api/news/${id}/image` : null,
+    };
+  });
+  images = nextImages;
+  console.info(`WijTeunesen: ${items.length} Nederlandse berichten, ${nextImages.size} met foto.`);
+  return items;
+}
+
+export function readWijNews() {
+  if (!pending) {
+    pending = loadWijNews().finally(() => {
+      pending = null;
+    });
+  }
+  return pending;
 }
 
 export function currentNewsSite() {

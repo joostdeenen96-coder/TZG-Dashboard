@@ -5,7 +5,6 @@ import { DieselCard } from "../components/DieselCard";
 import { Header } from "../components/Header";
 import { NewsCard } from "../components/NewsCard";
 import { WaterLevelCard } from "../components/WaterLevelCard";
-import { WeatherCard } from "../components/WeatherCard";
 import { WidgetBoundary } from "../components/WidgetBoundary";
 import { useAmsterdamNow } from "../hooks/useAmsterdamNow";
 import { clearScreenReloadGuard } from "../components/ScreenGuard";
@@ -103,11 +102,6 @@ export function DashboardPage() {
               )}
               <WidgetBoundary title="Dieseltoeslag">
                 <DieselCard />
-              </WidgetBoundary>
-            </section>
-            <section className="h-[360px] shrink-0">
-              <WidgetBoundary title="Weerbericht">
-                <WeatherCard />
               </WidgetBoundary>
             </section>
             <section className="min-h-0 flex-1">

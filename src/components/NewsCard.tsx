@@ -13,18 +13,21 @@ const previews: WijNewsItem[] = [
     title: "Titel van het bericht",
     summary: "Hier komen de eerste regels van een Nederlands nieuwsbericht op WijTeunesen.",
     publishedAt: "",
+    imagePath: null,
   },
   {
     id: "voorbeeld-datum",
     title: "Tweede bericht",
     summary: "Alleen Nederlandse berichten van de site wt-nieuws wisselen hier.",
     publishedAt: "",
+    imagePath: null,
   },
 ];
 
 export function NewsCard() {
   const state = useWijNews();
   const [index, setIndex] = useState(0);
+  const [hiddenPhoto, setHiddenPhoto] = useState<string | null>(null);
   const ready = state.status === "ready" || state.status === "fallback" ? state : null;
   const liveItems = ready?.data.connected ? ready.data.items : [];
   const sample = ready !== null && !ready.data.connected;
@@ -60,26 +63,38 @@ export function NewsCard() {
       <AnimatePresence mode="sync">
         <motion.div
           key={active.id}
-          className="absolute inset-0 flex flex-col justify-center px-10 py-6"
+          className={`absolute inset-0 grid ${active.imagePath && hiddenPhoto !== active.id ? "grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]" : "grid-cols-1"}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="flex items-center justify-between gap-6">
-            <p className="text-[14px] font-semibold tracking-[0.28em] text-gold uppercase">WijTeunesen</p>
-            <p className="font-display text-[22px] tracking-[0.18em] text-white/80 tabular-nums">
-              {String((shown.indexOf(active) >= 0 ? shown.indexOf(active) : index) + 1).padStart(2, "0")} / {String(shown.length).padStart(2, "0")}
+          {active.imagePath && hiddenPhoto !== active.id ? (
+            <div className="relative min-h-0 overflow-hidden bg-black/40">
+              <img
+                src={active.imagePath}
+                alt=""
+                className="h-full w-full object-cover"
+                onError={() => setHiddenPhoto(active.id)}
+              />
+            </div>
+          ) : null}
+          <div className="flex min-h-0 flex-col justify-center px-12 py-8">
+            <div className="flex items-center justify-between gap-6">
+              <p className="text-[14px] font-semibold tracking-[0.28em] text-gold uppercase">WijTeunesen</p>
+              <p className="font-display text-[22px] tracking-[0.18em] text-white/80 tabular-nums">
+                {String((shown.indexOf(active) >= 0 ? shown.indexOf(active) : index) + 1).padStart(2, "0")} / {String(shown.length).padStart(2, "0")}
+              </p>
+            </div>
+            <h2 className="mt-4 line-clamp-2 font-display text-[84px] leading-[0.95] font-semibold tracking-wide">
+              {active.title}
+            </h2>
+            <p className="mt-6 line-clamp-4 text-[32px] leading-snug text-mist">{active.summary}</p>
+            <p className={`mt-6 text-[22px] ${state.status === "fallback" ? "text-gold" : "text-mist"}`}>
+              {state.status === "fallback" ? "Laatste bekende gegevens · " : ""}
+              {ready?.data.connected ? formatPublicationDate(active.publishedAt) : "Voorbeeld"}
             </p>
           </div>
-          <h2 className="mt-3 max-h-[1.15em] overflow-hidden font-display text-[64px] leading-none font-semibold tracking-wide">
-            {active.title}
-          </h2>
-          <p className="mt-4 max-h-[2.6em] overflow-hidden text-[28px] leading-snug text-mist">{active.summary}</p>
-          <p className={`mt-4 text-[20px] ${state.status === "fallback" ? "text-gold" : "text-mist"}`}>
-            {state.status === "fallback" ? "Laatste bekende gegevens · " : ""}
-            {ready?.data.connected ? formatPublicationDate(active.publishedAt) : "Voorbeeld"}
-          </p>
         </motion.div>
       </AnimatePresence>
       <div className="absolute right-0 bottom-0 left-0 z-10 h-1.5 bg-white/15">

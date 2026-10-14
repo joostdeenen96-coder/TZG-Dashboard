@@ -1,6 +1,6 @@
 # Teunesen TV-dashboard
 
-Volledig scherm voor de werkvloer en de kantine: waterstanden met bron-grafiek en verwachting, dieseltoeslag, weer in Gennep en Nederlandse WijTeunesen-berichten. Donker industrieel thema, Nederlandse teksten. De indeling is getekend op 2560×1440 en schaalt mee met het venster, ook op 3840×2160.
+Volledig scherm voor de werkvloer en de kantine: waterstanden met bron-grafiek en verwachting, dieseltoeslag en Nederlandse WijTeunesen-berichten met foto. Donker industrieel thema, Nederlandse teksten. De indeling is getekend op 2560×1440 en schaalt mee met het venster, ook op 3840×2160.
 
 ## Starten
 
@@ -22,12 +22,11 @@ npm run preview
 
 - Bovenbalk met logo en live klok (Europe/Amsterdam)
 - Vier kaarten: Kaub, Ruhrort, Maxau en dieseltoeslag
-- Weerbericht Gennep en previews van WijTeunesen-nieuws (`/sites/wt-nieuws`)
-- Diavoorstelling van projecten, wisselt elke 8 seconden
+- Groot WijTeunesen-overzicht (`/sites/wt-nieuws`), alleen berichten met nieuwstaal NL, laatste vijf, wissel elke 20 seconden, met foto als die er is
 
 Het scherm is bedoeld om aan te blijven staan. Waterstanden, dieseltoeslag en nieuws verversen standaard elke 5 minuten (het interval uit `/admin`, anders 300 seconden). Valt het netwerk weg, dan blijft de laatste bekende tegel staan, komt er een nieuwe poging en toont de balk “Laatste bekende gegevens”. Een tegel die vastloopt blijft op die kaart; de rest van het scherm gaat door. Laden, een fout en een lege bron hebben elk een eigen staat. Logregels beginnen met `[teunesen-tv]` in de browserconsole en op de API.
 
-De browser praat alleen met deze API. Waterstanden: `GET /api/waterlevels`. Kaub, Ruhrort en Maxau tekenen dezelfde donkere grafiek uit de meetreeks. Dieseltoeslag: `GET /api/dieselsurcharge` leest de SharePoint-lijst uit `config.json` (standaard `Dieseltoeslagen Asvervoer` op `sites/Facturatie`) één keer per weekvenster, vanaf woensdag 18:00 Amsterdam-tijd, en toont de laatste vier bekende weken in `weken`. Het verborgen beheer staat op `/admin` en schrijft die instellingen, de nieuwssite, de bibliotheek, de plaatsnaam, het verversinterval en het aantal nieuwsitems naar `config.json`. WijTeunesen-nieuws: `GET /api/news`. Rechtsboven staat **Inloggen**. Daarmee kan een beheerder de Graph client-id en secret zetten. De diesel-lijst zelf staat in de code. Het nieuws komt alleen van `https://teunesen.sharepoint.com/sites/wt-nieuws`. Eerste aanmelding: `admin` / `teunesen`. Het wachtwoord en de sleutels blijven lokaal in `data/settings.json` en gaan niet de repository in. Zonder geldige Graph-gegevens valt de dieseltoeslag terug op de lokale cijfers en blijft het nieuws leeg, met voorbeeldkaarten. Weer en projectfoto’s staan in `src/services/dashboardService.ts`. Details staan in `docs/architectuur.md`.
+De browser praat alleen met deze API. Waterstanden: `GET /api/waterlevels`. Kaub, Ruhrort en Maxau tekenen dezelfde donkere grafiek uit de meetreeks. Dieseltoeslag: `GET /api/dieselsurcharge` leest de SharePoint-lijst uit `config.json` (standaard `Dieseltoeslagen Asvervoer` op `sites/Facturatie`) één keer per weekvenster, vanaf woensdag 18:00 Amsterdam-tijd, en toont de laatste vier bekende weken in `weken`. Het verborgen beheer staat op `/admin` en schrijft die instellingen, de nieuwssite, de bibliotheek, de plaatsnaam, het verversinterval en het aantal nieuwsitems naar `config.json`. WijTeunesen-nieuws: `GET /api/news`, gefilterd op SharePoint-veld `Nieuws taal` = NL. Een foto komt binnen via `GET /api/news/:id/image`. Rechtsboven staat **Inloggen**. Daarmee kan een beheerder de Graph client-id en secret zetten. De diesel-lijst zelf staat in de code. Het nieuws komt alleen van `https://teunesen.sharepoint.com/sites/wt-nieuws`. Eerste aanmelding: `admin` / `teunesen`. Het wachtwoord en de sleutels blijven lokaal in `data/settings.json` en gaan niet de repository in. Zonder geldige Graph-gegevens valt de dieseltoeslag terug op de lokale cijfers en blijft het nieuws leeg, met voorbeeldkaarten. Details staan in `docs/architectuur.md`.
 
 ## Foto’s
 

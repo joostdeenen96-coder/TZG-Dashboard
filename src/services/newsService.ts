@@ -18,7 +18,9 @@ function items(value: unknown): WijNewsItem[] {
     const title = text(row.title);
     const publishedAt = text(row.publishedAt);
     if (!id || !title || !publishedAt) return [];
-    return [{ id, title, summary: text(row.summary), publishedAt }];
+    const expectedImage = `/api/news/${encodeURIComponent(id)}/image`;
+    const imagePath = row.imagePath === expectedImage ? expectedImage : null;
+    return [{ id, title, summary: text(row.summary), publishedAt, imagePath }];
   });
 }
 
@@ -51,7 +53,7 @@ function acceptNews(value: unknown): WijNewsResponse | null {
 
 const newsFeed = createPollingFeed<WijNewsResponse>({
   name: "nieuws",
-  storageKey: "teunesen.tv.news.v1",
+  storageKey: "teunesen.tv.news.v2",
   unavailable: "WijTeunesen-nieuws niet bereikbaar.",
   load: loadNews,
   accept: acceptNews,
