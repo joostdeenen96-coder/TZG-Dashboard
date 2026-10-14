@@ -39,7 +39,7 @@ function textField(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function plainText(value: unknown, limit = 420) {
+function plainText(value: unknown, limit = 900) {
   if (typeof value !== "string") return "";
   const cleaned = value
     .replace(/<[^>]+>/g, " ")
@@ -51,6 +51,34 @@ function plainText(value: unknown, limit = 420) {
   const word = cut.lastIndexOf(" ");
   const end = word > 80 ? word : limit;
   return `${cut.slice(0, end).trim()}…`;
+}
+
+function collectHtml(value: unknown, found: string[] = []): string[] {
+  if (!value || typeof value !== "object") return found;
+  if (Array.isArray(value)) {
+    for (const item of value) collectHtml(item, found);
+    return found;
+  }
+  const row = value as Record<string, unknown>;
+  if (typeof row.innerHtml === "string" && row.innerHtml.trim()) found.push(row.innerHtml);
+  for (const child of Object.values(row)) {
+    if (child && typeof child === "object") collectHtml(child, found);
+  }
+  return found;
+}
+
+async function readPageBody(siteId: string, pageId: string) {
+  try {
+    const payload = asObject(
+      await graphGet(graphUrl(`/sites/${siteId}/pages/${pageId}/microsoft.graph.sitePage`, { $expand: "canvasLayout" })),
+      "Paginainhoud is ongeldig.",
+    );
+    return plainText(collectHtml(payload.canvasLayout).join(" "));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "fout";
+    console.error(`Paginainhoud niet gelezen (${message.slice(0, 160)}).`);
+    return "";
+  }
 }
 
 function odataText(value: string) {
@@ -202,7 +230,7 @@ async function loadWijNews(): Promise<WijNewsItem[]> {
   const rows = await readDutchRows(library.siteId, library.libraryId);
   const pages = await readPages(library.siteId, new Set(rows.map((row) => row.file)));
   const nextImages = new Map<string, StoredNewsImage>();
-  const items = rows.map((row) => {
+  const drafts = rows.map((row) => {
     const page = pages.get(row.file);
     const id = page && typeof page.id === "string" && /^[A-Za-z0-9-]{1,80}$/.test(page.id) ? page.id : row.id;
     const hasImage = page ? rememberImage(id, page.thumbnailWebUrl, siteUrl, nextImages) : false;
@@ -214,6 +242,13 @@ async function loadWijNews(): Promise<WijNewsItem[]> {
       publishedAt: row.publishedAt,
       imagePath: hasImage ? `/api/news/${id}/image` : null,
     };
+  });
+  const bodies = await Promise.all(
+    drafts.map((item) => (/^[0-9a-f-]{36}$/i.test(item.id) ? readPageBody(library.siteId, item.id) : Promise.resolve(""))),
+  );
+  const items = drafts.map((item, index) => {
+    const body = bodies[index];
+    return body.length > item.summary.length ? { ...item, summary: body } : item;
   });
   images = nextImages;
   console.info(`WijTeunesen: ${items.length} Nederlandse berichten, ${nextImages.size} met foto.`);

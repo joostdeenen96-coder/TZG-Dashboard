@@ -63,37 +63,37 @@ export function NewsCard() {
       <AnimatePresence mode="sync">
         <motion.div
           key={active.id}
-          className={`absolute inset-0 grid ${active.imagePath && hiddenPhoto !== active.id ? "grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]" : "grid-cols-1"}`}
+          className="absolute inset-0 grid grid-cols-1"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {active.imagePath && hiddenPhoto !== active.id ? (
-            <div className="relative min-h-0 overflow-hidden bg-black/40">
+          <div className="flex min-h-0 items-center gap-10 px-12 py-8">
+            {active.imagePath && hiddenPhoto !== active.id ? (
               <img
                 src={active.imagePath}
                 alt=""
-                className="h-full w-full object-cover"
+                className="h-auto max-h-[440px] w-auto max-w-[420px] shrink-0 rounded-xl object-contain"
                 onError={() => setHiddenPhoto(active.id)}
               />
-            </div>
-          ) : null}
-          <div className="flex min-h-0 flex-col justify-center px-12 py-8">
-            <div className="flex items-center justify-between gap-6">
-              <p className="text-[14px] font-semibold tracking-[0.28em] text-gold uppercase">WijTeunesen</p>
-              <p className="font-display text-[22px] tracking-[0.18em] text-white/80 tabular-nums">
-                {String((shown.indexOf(active) >= 0 ? shown.indexOf(active) : index) + 1).padStart(2, "0")} / {String(shown.length).padStart(2, "0")}
+            ) : null}
+            <div className="flex min-w-0 flex-1 flex-col justify-center">
+              <div className="flex items-center justify-between gap-6">
+                <p className="text-[14px] font-semibold tracking-[0.28em] text-gold uppercase">WijTeunesen</p>
+                <p className="font-display text-[22px] tracking-[0.18em] text-white/80 tabular-nums">
+                  {String((shown.indexOf(active) >= 0 ? shown.indexOf(active) : index) + 1).padStart(2, "0")} / {String(shown.length).padStart(2, "0")}
+                </p>
+              </div>
+              <h2 className="mt-3 line-clamp-2 font-display text-[68px] leading-[0.95] font-semibold tracking-wide">
+                {active.title}
+              </h2>
+              <p className="mt-5 line-clamp-8 text-[30px] leading-snug text-paper/90">{active.summary}</p>
+              <p className={`mt-6 text-[22px] ${state.status === "fallback" ? "text-gold" : "text-mist"}`}>
+                {state.status === "fallback" ? "Laatste bekende gegevens · " : ""}
+                {ready?.data.connected ? formatPublicationDate(active.publishedAt) : "Voorbeeld"}
               </p>
             </div>
-            <h2 className="mt-4 line-clamp-2 font-display text-[84px] leading-[0.95] font-semibold tracking-wide">
-              {active.title}
-            </h2>
-            <p className="mt-6 line-clamp-4 text-[32px] leading-snug text-mist">{active.summary}</p>
-            <p className={`mt-6 text-[22px] ${state.status === "fallback" ? "text-gold" : "text-mist"}`}>
-              {state.status === "fallback" ? "Laatste bekende gegevens · " : ""}
-              {ready?.data.connected ? formatPublicationDate(active.publishedAt) : "Voorbeeld"}
-            </p>
           </div>
         </motion.div>
       </AnimatePresence>
