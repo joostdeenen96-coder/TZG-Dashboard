@@ -1,5 +1,8 @@
-import { LoaderCircle } from "lucide-react";
+import { Cloud, CloudDrizzle, CloudRain, CloudSun, LoaderCircle, Sun } from "lucide-react";
 import { formatAmsterdamStamp, formatAmsterdamTime } from "../lib/format";
+import { readWeather } from "../services/dashboardService";
+import { useScreenConfig } from "../services/dashboardConfigService";
+import type { WeatherIconName } from "../types";
 
 type HeaderProps = {
   now: Date;
@@ -9,6 +12,33 @@ type HeaderProps = {
   adminLabel: string;
   onAdmin: () => void;
 };
+
+const weatherIcons = {
+  cloud: Cloud,
+  rain: CloudRain,
+  showers: CloudDrizzle,
+  sun: Sun,
+  "sun-cloud": CloudSun,
+} satisfies Record<WeatherIconName, typeof Cloud>;
+
+function HeaderWeather() {
+  const plaatsnaam = useScreenConfig().weer.plaatsnaam;
+  const state = readWeather();
+  if (state.status !== "ready") return null;
+  const weather = state.data;
+  const Icon = weatherIcons[weather.icon];
+  return (
+    <div className="flex items-center gap-3 border-r border-slate/40 pr-5" aria-label="Weerbericht">
+      <Icon className="h-8 w-8 shrink-0 text-gold" strokeWidth={2.1} />
+      <div className="min-w-0 leading-none">
+        <p className="font-display text-[34px] font-semibold tabular-nums">{weather.temperatureC}°</p>
+        <p className="mt-1 max-w-[240px] truncate text-[15px] text-mist">
+          {weather.condition} · {plaatsnaam || weather.location}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function Header({ now, fetchedAt, refreshing, stale, adminLabel, onAdmin }: HeaderProps) {
   const stamp = formatAmsterdamStamp(now);
@@ -26,6 +56,7 @@ export function Header({ now, fetchedAt, refreshing, stale, adminLabel, onAdmin 
     <header className="flex h-[78px] shrink-0 items-center justify-between border-b border-slate/30">
       <img src="/teunesen-logo.png" alt="Teunesen" className="h-[58px] w-auto" />
       <div className="flex items-center gap-5">
+        <HeaderWeather />
         <div className="text-right">
           <p className="leading-none text-paper" data-clock={stamp}>
             <span className="text-[22px]">{date}</span>

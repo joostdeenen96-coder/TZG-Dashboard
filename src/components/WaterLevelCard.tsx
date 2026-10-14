@@ -34,10 +34,47 @@ function isReady(station: WaterStationResult): station is WaterStationResult & {
   );
 }
 
-function dailyForecast(points: WaterForecastPoint[]) {
+const MORNING_MINUTES = 6 * 60;
+
+function amsterdamClock(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Amsterdam",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const read = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  const hour = Number(read("hour"));
+  return {
+    key: `${read("year")}-${read("month")}-${read("day")}`,
+    minutes: (hour === 24 ? 0 : hour) * 60 + Number(read("minute")),
+  };
+}
+
+function dailyForecast(points: WaterForecastPoint[], now: Date) {
+  const today = amsterdamClock(now).key;
   const byDay = new Map<string, WaterForecastPoint>();
-  for (const point of points) byDay.set(point.timestamp.slice(0, 10), point);
-  return [...byDay.values()].slice(0, 5);
+  for (const point of points) {
+    const stamp = new Date(point.timestamp);
+    if (!Number.isFinite(stamp.getTime())) continue;
+    const clock = amsterdamClock(stamp);
+    if (clock.key <= today) continue;
+    const current = byDay.get(clock.key);
+    if (!current) {
+      byDay.set(clock.key, point);
+      continue;
+    }
+    const currentDistance = Math.abs(amsterdamClock(new Date(current.timestamp)).minutes - MORNING_MINUTES);
+    const nextDistance = Math.abs(clock.minutes - MORNING_MINUTES);
+    if (nextDistance < currentDistance) byDay.set(clock.key, point);
+  }
+  return [...byDay.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .slice(0, 5)
+    .map(([, point]) => point);
 }
 
 export function WaterLevelCard({ station, refreshing = false, stale = false }: WaterLevelCardProps) {
@@ -46,7 +83,7 @@ export function WaterLevelCard({ station, refreshing = false, stale = false }: W
   }
 
   const TrendIcon = station.trend === "stijgend" ? ArrowUp : station.trend === "dalend" ? ArrowDown : Minus;
-  const days = dailyForecast(station.forecast);
+  const days = dailyForecast(station.forecast, new Date());
 
   return (
     <article className="tv-card relative flex h-full min-h-0 flex-col px-4 py-3" data-status={stale ? "fallback" : "ready"}>
@@ -79,7 +116,7 @@ export function WaterLevelCard({ station, refreshing = false, stale = false }: W
         <WaterChart series={station.series} forecast={station.forecast} />
       </div>
       {days.length > 0 ? (
-        <ul className="mt-2 grid grid-cols-5 gap-1">
+        <ul className="mt-2 grid gap-1" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
           {days.map((point) => (
             <li key={point.timestamp} className="min-w-0 text-center">
               <p className="truncate text-[12px] text-mist">{dayLabel.format(new Date(point.timestamp))}</p>

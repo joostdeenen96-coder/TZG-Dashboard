@@ -131,7 +131,7 @@ Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record) e
 | Kaub, Ruhrort | PEGELONLINE via onze API | live |
 | Maxau | HVZ-dataset via onze API | live |
 | Dieseltoeslag | SharePoint via Microsoft Graph, mock alleen bij een Graph-fout | live zodra de Graph-variabelen gezet zijn |
-| Weer | niet op het scherm | de tegel is weg; de plaatsnaam blijft alleen in `/admin` |
+| Weer | `src/services/dashboardService.ts` | mock, klein in de balk links van de klok. Plaatsnaam via `/admin` |
 | WijTeunesen-nieuws | `GET /api/news`, site `https://teunesen.sharepoint.com/sites/wt-nieuws` | nieuwspagina's met `PromotedState` 2 en `Nieuws taal` NL, de laatste vijf. Het grote vlak wisselt elke 20 seconden. Een foto gaat via `GET /api/news/:id/image`. Zonder Graph-gegevens toont het scherm voorbeeldtekst |
 
 ## Permanent scherm
