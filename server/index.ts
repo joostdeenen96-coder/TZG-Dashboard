@@ -20,7 +20,8 @@ app.use((req, res, next) => {
       path.startsWith("/api/waterlevels") ||
       path.startsWith("/api/dieselsurcharge") ||
       path.startsWith("/api/news") ||
-      path.startsWith("/api/agenda");
+      path.startsWith("/api/agenda") ||
+      path.startsWith("/api/wij-agenda");
     if (!watched) return;
     const line = `${new Date().toISOString()} info api ${req.method} ${path} ${res.statusCode} ${Date.now() - started}ms`;
     if (res.statusCode >= 500) console.error(`[teunesen-tv] ${line}`);
@@ -35,6 +36,7 @@ app.use("/api/config", configRouter);
 app.use("/api/waterlevels", waterLevelsRouter);
 app.use("/api/news", newsRouter);
 app.use("/api/agenda", agendaRouter);
+app.use("/api/wij-agenda", agendaRouter);
 app.use("/api/dieselsurcharge", dieselSurchargeRouter);
 
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
