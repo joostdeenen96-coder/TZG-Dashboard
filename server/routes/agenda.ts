@@ -4,6 +4,7 @@ import { getWijAgenda } from "../services/agendaService.js";
 export const agendaRouter = Router();
 
 agendaRouter.get("/", async (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   try {
     res.json(await getWijAgenda());
   } catch (error) {

@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import type { WijAgendaItem, WijAgendaResponse } from "../types";
 import { createPollingFeed } from "./tvFeed";
 
-const AGENDA_PATH = "/api/agenda";
+const AGENDA_PATH = "/api/agenda?versie=2";
 
 function text(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -36,7 +36,7 @@ function mapPayload(payload: unknown): WijAgendaResponse {
 }
 
 async function loadAgenda(signal: AbortSignal): Promise<WijAgendaResponse | "empty"> {
-  const response = await fetch(AGENDA_PATH, { signal });
+  const response = await fetch(AGENDA_PATH, { signal, cache: "no-store" });
   if (!response.ok) throw new Error(`Agenda antwoordde met ${response.status}.`);
   return mapPayload(await response.json());
 }
