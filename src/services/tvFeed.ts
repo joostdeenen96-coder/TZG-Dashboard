@@ -3,7 +3,7 @@ import { getRefreshMs } from "./dashboardConfigService";
 import { tvLog } from "./tvLog";
 
 export const TV_REFRESH_MS = 5 * 60 * 1000;
-const FETCH_TIMEOUT_MS = 20_000;
+const FETCH_TIMEOUT_MS = 45_000;
 const RETRY_MS = [5_000, 15_000, 30_000, 60_000];
 
 type FeedOptions<T> = {

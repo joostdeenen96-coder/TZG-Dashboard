@@ -20,7 +20,7 @@ function items(value: unknown): WijNewsItem[] {
     if (!id || !title || !publishedAt) return [];
     const expectedImage = `/api/news/${encodeURIComponent(id)}/image`;
     const imagePath = row.imagePath === expectedImage ? expectedImage : null;
-    return [{ id, title, summary: text(row.summary), publishedAt, imagePath }];
+    return [{ id, title, category: text(row.category), summary: text(row.summary), publishedAt, imagePath }];
   });
 }
 
@@ -53,7 +53,7 @@ function acceptNews(value: unknown): WijNewsResponse | null {
 
 const newsFeed = createPollingFeed<WijNewsResponse>({
   name: "nieuws",
-  storageKey: "teunesen.tv.news.v2",
+  storageKey: "teunesen.tv.news.v3",
   unavailable: "WijTeunesen-nieuws niet bereikbaar.",
   load: loadNews,
   accept: acceptNews,

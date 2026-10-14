@@ -5,6 +5,7 @@ import { sharePointGraphPath } from "../services/settingsService.js";
 export type WijNewsItem = {
   id: string;
   title: string;
+  category: string;
   summary: string;
   publishedAt: string;
   imagePath: string | null;
@@ -14,7 +15,7 @@ export type StoredNewsImage =
   | { kind: "cdn"; url: string }
   | { kind: "sharepoint"; fileUrl: string };
 
-const NEWS_LIMIT = 5;
+const NEWS_LIMIT = 15;
 const CDN_HOST = "cdn.hubblecontent.osi.office.net";
 
 let images = new Map<string, StoredNewsImage>();
@@ -39,7 +40,7 @@ function textField(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function plainText(value: unknown, limit = 900) {
+function plainText(value: unknown, limit = 1800) {
   if (typeof value !== "string") return "";
   const cleaned = value
     .replace(/<[^>]+>/g, " ")
@@ -124,6 +125,7 @@ export async function testNewsLibrary(siteUrl?: string, bibliotheek?: string) {
 type DutchRow = {
   id: string;
   title: string;
+  category: string;
   file: string;
   publishedAt: string;
 };
@@ -135,11 +137,11 @@ function isPromoted(value: unknown) {
 async function readDutchRows(siteId: string, libraryId: string) {
   const rows: DutchRow[] = [];
   let next: URL | null = graphUrl(`/sites/${siteId}/lists/${libraryId}/items`, {
-    $expand: "fields($select=Title,Nieuws_x0020_taal,PromotedState,Created,FirstPublishedDate,FileLeafRef)",
+    $expand: "fields($select=Title,Nieuws_x0020_categorie,Nieuws_x0020_taal,PromotedState,Created,FirstPublishedDate,FileLeafRef)",
     $orderby: "lastModifiedDateTime desc",
     $top: "25",
   });
-  for (let page = 0; page < 3 && next; page += 1) {
+  for (let page = 0; page < 6 && next; page += 1) {
     const payload = asObject(await graphGet(next), "Nieuwspagina's zijn ongeldig.");
     if (!Array.isArray(payload.value)) throw new Error("Nieuwspagina's zijn ongeldig.");
     for (const item of payload.value) {
@@ -151,7 +153,7 @@ async function readDutchRows(siteId: string, libraryId: string) {
       const publishedAt = textField(fields.FirstPublishedDate) || textField(fields.Created);
       const id = textField(row.id);
       if (!title || !file || !publishedAt || !id) continue;
-      rows.push({ id, title, file, publishedAt });
+      rows.push({ id, title, category: textField(fields.Nieuws_x0020_categorie), file, publishedAt });
     }
     if (rows.length >= NEWS_LIMIT) break;
     next = nextGraphLink(payload);
@@ -165,7 +167,7 @@ async function readPages(siteId: string, names: Set<string>) {
     $top: "25",
     $orderby: "lastModifiedDateTime desc",
   });
-  for (let page = 0; page < 3 && next && byName.size < names.size; page += 1) {
+  for (let page = 0; page < 6 && next && byName.size < names.size; page += 1) {
     const payload = asObject(await graphGet(next), "Nieuwspagina's zijn ongeldig.");
     if (!Array.isArray(payload.value)) throw new Error("Nieuwspagina's zijn ongeldig.");
     for (const item of payload.value) {
@@ -223,6 +225,20 @@ function rememberImage(id: string, thumbnail: unknown, siteUrl: string, next: Ma
   return true;
 }
 
+async function mapPool<T, R>(items: T[], size: number, worker: (item: T) => Promise<R>) {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+  async function run() {
+    while (cursor < items.length) {
+      const index = cursor;
+      cursor += 1;
+      results[index] = await worker(items[index]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(size, items.length) }, () => run()));
+  return results;
+}
+
 async function loadWijNews(): Promise<WijNewsItem[]> {
   const config = getDashboardConfig();
   const siteUrl = config.sharepointNieuws.siteUrl;
@@ -238,13 +254,14 @@ async function loadWijNews(): Promise<WijNewsItem[]> {
     return {
       id,
       title: row.title,
+      category: row.category,
       summary,
       publishedAt: row.publishedAt,
       imagePath: hasImage ? `/api/news/${id}/image` : null,
     };
   });
-  const bodies = await Promise.all(
-    drafts.map((item) => (/^[0-9a-f-]{36}$/i.test(item.id) ? readPageBody(library.siteId, item.id) : Promise.resolve(""))),
+  const bodies = await mapPool(drafts, 5, (item) =>
+    /^[0-9a-f-]{36}$/i.test(item.id) ? readPageBody(library.siteId, item.id) : Promise.resolve(""),
   );
   const items = drafts.map((item, index) => {
     const body = bodies[index];

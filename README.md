@@ -22,7 +22,7 @@ npm run preview
 
 - Bovenbalk met logo en live klok (Europe/Amsterdam)
 - Vier kaarten: Kaub, Ruhrort, Maxau en dieseltoeslag
-- Groot WijTeunesen-overzicht (`/sites/wt-nieuws`), alleen berichten met nieuwstaal NL, laatste vijf, wissel elke 20 seconden, met foto als die er is
+- Groot WijTeunesen-overzicht (`/sites/wt-nieuws`), laatste vijftien Nederlandse berichten van de hele site, met categorie, wissel elke 20 seconden, met foto als die er is
 
 Het scherm is bedoeld om aan te blijven staan. Waterstanden, dieseltoeslag en nieuws verversen standaard elke 5 minuten (het interval uit `/admin`, anders 300 seconden). Valt het netwerk weg, dan blijft de laatste bekende tegel staan, komt er een nieuwe poging en toont de balk “Laatste bekende gegevens”. Een tegel die vastloopt blijft op die kaart; de rest van het scherm gaat door. Laden, een fout en een lege bron hebben elk een eigen staat. Logregels beginnen met `[teunesen-tv]` in de browserconsole en op de API.
 

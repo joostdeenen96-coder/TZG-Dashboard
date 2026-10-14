@@ -13,6 +13,7 @@ const previews: WijNewsItem[] = [
     title: "Titel van het bericht",
     summary: "Hier komen de eerste regels van een Nederlands nieuwsbericht op WijTeunesen.",
     publishedAt: "",
+    category: "Lief en leed",
     imagePath: null,
   },
   {
@@ -20,6 +21,7 @@ const previews: WijNewsItem[] = [
     title: "Tweede bericht",
     summary: "Alleen Nederlandse berichten van de site wt-nieuws wisselen hier.",
     publishedAt: "",
+    category: "Nieuws",
     imagePath: null,
   },
 ];
@@ -31,7 +33,7 @@ export function NewsCard() {
   const ready = state.status === "ready" || state.status === "fallback" ? state : null;
   const liveItems = ready?.data.connected ? ready.data.items : [];
   const sample = ready !== null && !ready.data.connected;
-  const shown = (sample ? previews : liveItems).slice(0, 5);
+  const shown = (sample ? previews : liveItems).slice(0, 15);
   const rotationKey = shown.map((item) => item.id).join("|");
   const active = shown[index] ?? shown[0];
 
@@ -69,27 +71,30 @@ export function NewsCard() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="flex min-h-0 items-center gap-10 px-12 py-8">
+          <div className="flex min-h-0 items-start gap-8 px-10 py-6">
             {active.imagePath && hiddenPhoto !== active.id ? (
               <img
                 src={active.imagePath}
                 alt=""
-                className="h-auto max-h-[440px] w-auto max-w-[420px] shrink-0 rounded-xl object-contain"
+                className="mt-1 h-auto max-h-[280px] w-auto max-w-[260px] shrink-0 rounded-xl object-contain"
                 onError={() => setHiddenPhoto(active.id)}
               />
             ) : null}
-            <div className="flex min-w-0 flex-1 flex-col justify-center">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <div className="flex items-center justify-between gap-6">
-                <p className="text-[14px] font-semibold tracking-[0.28em] text-gold uppercase">WijTeunesen</p>
-                <p className="font-display text-[22px] tracking-[0.18em] text-white/80 tabular-nums">
+                <p className="text-[13px] font-semibold tracking-[0.22em] text-gold uppercase">
+                  WijTeunesen
+                  {active.category ? <span className="ml-3 font-medium tracking-normal text-mist normal-case">{active.category}</span> : null}
+                </p>
+                <p className="font-display text-[18px] tracking-[0.16em] text-white/70 tabular-nums">
                   {String((shown.indexOf(active) >= 0 ? shown.indexOf(active) : index) + 1).padStart(2, "0")} / {String(shown.length).padStart(2, "0")}
                 </p>
               </div>
-              <h2 className="mt-3 line-clamp-2 font-display text-[68px] leading-[0.95] font-semibold tracking-wide">
+              <h2 className="mt-2 line-clamp-2 font-display text-[42px] leading-none font-semibold tracking-wide">
                 {active.title}
               </h2>
-              <p className="mt-5 line-clamp-8 text-[30px] leading-snug text-paper/90">{active.summary}</p>
-              <p className={`mt-6 text-[22px] ${state.status === "fallback" ? "text-gold" : "text-mist"}`}>
+              <p className="mt-3 line-clamp-[16] text-[22px] leading-snug text-paper/90">{active.summary}</p>
+              <p className={`mt-3 text-[18px] ${state.status === "fallback" ? "text-gold" : "text-mist"}`}>
                 {state.status === "fallback" ? "Laatste bekende gegevens · " : ""}
                 {ready?.data.connected ? formatPublicationDate(active.publishedAt) : "Voorbeeld"}
               </p>

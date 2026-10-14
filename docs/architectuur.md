@@ -132,7 +132,7 @@ Faalt Graph (ontbrekende variabelen, token, site, lijst of geen actief record) e
 | Maxau | HVZ-dataset via onze API | live |
 | Dieseltoeslag | SharePoint via Microsoft Graph, mock alleen bij een Graph-fout | live zodra de Graph-variabelen gezet zijn |
 | Weer | `src/services/dashboardService.ts` | mock, klein in de balk links van de klok. Plaatsnaam via `/admin` |
-| WijTeunesen-nieuws | `GET /api/news`, site `https://teunesen.sharepoint.com/sites/wt-nieuws` | nieuwspagina's met `PromotedState` 2 en `Nieuws taal` NL, de laatste vijf. Het grote vlak wisselt elke 20 seconden. Een foto gaat via `GET /api/news/:id/image`. Zonder Graph-gegevens toont het scherm voorbeeldtekst |
+| WijTeunesen-nieuws | `GET /api/news`, site `https://teunesen.sharepoint.com/sites/wt-nieuws` | nieuwspagina's met `PromotedState` 2 en `Nieuws taal` NL, de laatste vijftien van de hele site, inclusief Lief en leed. De categorie staat klein bij de titel. Het vlak wisselt elke 20 seconden. Een foto gaat via `GET /api/news/:id/image`. Zonder Graph-gegevens toont het scherm voorbeeldtekst |
 
 ## Permanent scherm
 

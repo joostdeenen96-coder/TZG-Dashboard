@@ -35,6 +35,7 @@ export type WaterStationResult = {
 export type WijNewsItem = {
   id: string;
   title: string;
+  category: string;
   summary: string;
   publishedAt: string;
   imagePath: string | null;
