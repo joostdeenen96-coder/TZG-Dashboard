@@ -92,7 +92,7 @@ export function NewsCard() {
                   {String((shown.indexOf(active) >= 0 ? shown.indexOf(active) : index) + 1).padStart(2, "0")} / {String(shown.length).padStart(2, "0")}
                 </p>
               </div>
-              <h2 className="mt-2 line-clamp-2 font-display text-[42px] leading-none font-semibold tracking-wide">
+              <h2 className="mt-2 line-clamp-2 pb-1 font-display text-[42px] leading-tight font-semibold tracking-wide">
                 {active.title}
               </h2>
               <p className="mt-3 line-clamp-[16] text-[22px] leading-snug text-paper/90">{active.summary}</p>

@@ -60,7 +60,7 @@ function dailyForecast(points: WaterForecastPoint[], now: Date) {
   for (const point of points) {
     const stamp = new Date(point.timestamp);
     if (!Number.isFinite(stamp.getTime())) continue;
-    const clock = amsterdamClock(stamp);
+    const clock = amsterdamClock(new Date(stamp.getTime() + 24 * 60 * 60 * 1000));
     if (clock.key <= today) continue;
     const current = byDay.get(clock.key);
     if (!current) {
@@ -119,7 +119,9 @@ export function WaterLevelCard({ station, refreshing = false, stale = false }: W
         <ul className="mt-2 grid gap-1" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
           {days.map((point) => (
             <li key={point.timestamp} className="min-w-0 text-center">
-              <p className="truncate text-[12px] text-mist">{dayLabel.format(new Date(point.timestamp))}</p>
+              <p className="truncate text-[12px] text-mist">
+                {dayLabel.format(new Date(Date.parse(point.timestamp) + 24 * 60 * 60 * 1000))}
+              </p>
               <p className="font-display text-[18px] leading-none font-semibold tabular-nums">{point.levelCm}</p>
               <p className="truncate text-[11px] tracking-wide text-gold uppercase">{point.kind}</p>
             </li>

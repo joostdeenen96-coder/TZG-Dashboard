@@ -5,11 +5,26 @@ type WaterChartProps = {
   forecast: WaterForecastPoint[];
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 const dayLabel = new Intl.DateTimeFormat("nl-NL", {
   timeZone: "Europe/Amsterdam",
   day: "numeric",
   month: "numeric",
 });
+
+function shiftForecast(points: WaterForecastPoint[], afterMs: number) {
+  const shifted: WaterForecastPoint[] = [];
+  for (const point of points) {
+    const time = Date.parse(point.timestamp);
+    if (!Number.isFinite(time)) continue;
+    const next = time + DAY_MS;
+    if (next <= afterMs) continue;
+    shifted.push({ ...point, timestamp: new Date(next).toISOString() });
+  }
+  shifted.sort((left, right) => Date.parse(left.timestamp) - Date.parse(right.timestamp));
+  return shifted;
+}
 
 function chartPath(points: WaterPoint[], xOf: (timestamp: string) => number, yOf: (levelCm: number) => number) {
   return points
@@ -19,15 +34,13 @@ function chartPath(points: WaterPoint[], xOf: (timestamp: string) => number, yOf
 
 export function WaterChart({ series, forecast }: WaterChartProps) {
   const measured = [...series].sort((left, right) => Date.parse(left.timestamp) - Date.parse(right.timestamp));
-  const expected = forecast
-    .filter((point) => point.kind === "verwacht")
-    .sort((left, right) => Date.parse(left.timestamp) - Date.parse(right.timestamp));
-  const estimated = forecast
-    .filter((point) => point.kind === "inschatting")
-    .sort((left, right) => Date.parse(left.timestamp) - Date.parse(right.timestamp));
+  const lastMeasuredMs = measured.length > 0 ? Date.parse(measured[measured.length - 1].timestamp) : Number.NEGATIVE_INFINITY;
+  const shifted = shiftForecast(forecast, lastMeasuredMs);
+  const expected = shifted.filter((point) => point.kind === "verwacht");
+  const estimated = shifted.filter((point) => point.kind === "inschatting");
   const bridge = measured.length > 0 ? [measured[measured.length - 1], ...expected] : expected;
   const estimateBridge = expected.length > 0 ? [expected[expected.length - 1], ...estimated] : estimated;
-  const all = [...measured, ...forecast];
+  const all = [...measured, ...shifted];
   if (all.length < 2) {
     return <p className="px-2 text-[15px] text-mist">Geen grafiekreeks.</p>;
   }
