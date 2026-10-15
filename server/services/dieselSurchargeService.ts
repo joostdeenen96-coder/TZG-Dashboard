@@ -15,16 +15,7 @@ type DieselSource = keyof typeof dieselProviders;
 const activeDieselSource: DieselSource = "sharepoint";
 
 const cacheFile = path.join(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../.."), "data", "diesel-week.json");
-
-const weekdayIndex: Record<string, number> = {
-  Sun: 0,
-  Mon: 1,
-  Tue: 2,
-  Wed: 3,
-  Thu: 4,
-  Fri: 5,
-  Sat: 6,
-};
+const MORNING_HOUR = 7;
 
 type DieselCache = {
   periodKey: string;
@@ -37,7 +28,6 @@ export function dieselPeriodKey(now = new Date()) {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-GB", {
       timeZone: "Europe/Amsterdam",
-      weekday: "short",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -51,11 +41,8 @@ export function dieselPeriodKey(now = new Date()) {
   const month = Number(parts.month);
   const day = Number(parts.day);
   const hour = Number(parts.hour);
-  const weekday = weekdayIndex[parts.weekday] ?? 0;
-  let daysBack = (weekday - 3 + 7) % 7;
-  if (weekday === 3 && hour < 18) daysBack = 7;
   const date = new Date(Date.UTC(year, month - 1, day));
-  date.setUTCDate(date.getUTCDate() - daysBack);
+  if (hour < MORNING_HOUR) date.setUTCDate(date.getUTCDate() - 1);
   const keyMonth = String(date.getUTCMonth() + 1).padStart(2, "0");
   const keyDay = String(date.getUTCDate()).padStart(2, "0");
   return `${date.getUTCFullYear()}-${keyMonth}-${keyDay}`;
@@ -104,7 +91,7 @@ export async function getDieselSurcharge(): Promise<DieselSurcharge> {
   const periodKey = dieselPeriodKey();
   const cached = readCache();
   if (cached?.periodKey === periodKey) {
-    console.info(`Dieseltoeslag uit weekcache ${periodKey}, peildatum ${cached.data.peildatum}.`);
+    console.info(`Dieseltoeslag uit ochtendcache ${periodKey}, peildatum ${cached.data.peildatum}.`);
     return cached.data;
   }
 
@@ -114,12 +101,12 @@ export async function getDieselSurcharge(): Promise<DieselSurcharge> {
       `Dieseltoeslag via SharePointDieselProvider: peildatum ${record.peildatum}, toeslag ${record.toeslagPercentage}%, actief ${record.actief}.`,
     );
     writeCache({ periodKey, data: record });
-    console.info(`Dieseltoeslag bewaard voor weekvenster ${periodKey}. Volgende lijstcontrole na woensdag 18:00.`);
+    console.info(`Dieseltoeslag bewaard voor ochtend ${periodKey}. Volgende lijstcontrole na 07:00.`);
     return record;
   } catch (error) {
     const message = error instanceof Error ? error.message : "onbekende fout";
     if (cached) {
-      console.error(`Dieseltoeslag via ${activeDieselSource} mislukt (${message}). Laatste weekcache blijft staan.`);
+      console.error(`Dieseltoeslag via ${activeDieselSource} mislukt (${message}). Laatste ochtendcache blijft staan.`);
       return cached.data;
     }
     console.error(`Dieseltoeslag via ${activeDieselSource} mislukt (${message}). Terugval op MockDieselProvider.`);
