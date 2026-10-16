@@ -62,7 +62,7 @@ export function DashboardPage() {
           className="absolute top-0 left-0 box-border flex h-[1440px] w-[2560px] origin-top-left flex-col gap-4 bg-ink p-5"
           style={{ transform: `scale(${scale})` }}
         >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(880px_240px_at_0%_0%,rgba(230,179,37,0.12),transparent_60%),radial-gradient(720px_280px_at_100%_0%,rgba(109,127,146,0.16),transparent_58%)]" />
+          <div className="glass-backdrop pointer-events-none absolute inset-0" />
           <div className="relative flex min-h-0 flex-1 flex-col gap-3">
             <Header
               now={now}

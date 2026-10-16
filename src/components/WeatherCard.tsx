@@ -38,10 +38,10 @@ export function WeatherCard() {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-xl border border-slate/40 bg-black/25 text-gold">
+          <span className="grid h-11 w-11 place-items-center rounded-[20px] border border-white/12 bg-white/[0.06] text-gold">
             <CurrentIcon className="h-5 w-5" strokeWidth={2.2} />
           </span>
-          <h2 className="font-display text-[32px] leading-none font-semibold tracking-wide uppercase">Weerbericht</h2>
+          <h2 className="font-display text-[32px] leading-none font-semibold tracking-[-0.015em]">Weerbericht</h2>
         </div>
         <p className="flex items-center gap-2 text-[18px] font-medium">
           <MapPin className="h-4 w-4 text-gold" strokeWidth={2.3} />

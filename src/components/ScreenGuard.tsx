@@ -38,8 +38,8 @@ export class ScreenGuard extends Component<ScreenGuardProps, ScreenGuardState> {
       <div
         style={{
           minHeight: "100vh",
-          background: "#07080b",
-          color: "#e7edf2",
+          background: "#0f1519",
+          color: "#eef2f4",
           display: "grid",
           placeItems: "center",
           fontFamily: "Source Sans 3, sans-serif",

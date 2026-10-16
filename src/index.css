@@ -1,14 +1,27 @@
 @import "tailwindcss";
 
+/* Teunesen Glass, donker thema: tokens uit het ontwerpsysteem van teunesen.nl. */
 @theme {
-  --font-display: "Barlow Condensed", sans-serif;
-  --font-sans: "Source Sans 3", sans-serif;
-  --color-ink: #07080b;
-  --color-panel: #12161c;
-  --color-mist: #93a0ae;
-  --color-paper: #e7edf2;
-  --color-gold: #e6b325;
-  --color-slate: #6d7f92;
+  --font-display: "Source Sans 3", "Source Sans Pro", "Segoe UI", sans-serif;
+  --font-sans: "Source Sans 3", "Source Sans Pro", "Segoe UI", sans-serif;
+  --color-ink: #0f1519;
+  --color-panel: #1a2329;
+  --color-mist: #a7b3bb;
+  --color-paper: #eef2f4;
+  --color-gold: #f6d44d;
+  --color-slate: #8696a2;
+  --color-water: #7fb8d4;
+  --color-forest: #7fc27e;
+}
+
+:root {
+  --glass-fill: rgba(20, 30, 38, 0.46);
+  --glass-fill-strong: rgba(22, 30, 36, 0.72);
+  --glass-stroke: rgba(255, 255, 255, 0.16);
+  --glass-highlight: rgba(255, 255, 255, 0.24);
+  --shadow-glass: 0 10px 36px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  --blur-glass: blur(22px) saturate(180%);
+  --radius-lg: 28px;
 }
 
 html,
@@ -21,7 +34,7 @@ body,
 }
 
 body {
-  background: #07080b;
+  background: #0f1519;
   color: var(--color-paper);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -29,17 +42,71 @@ body {
 }
 
 #root {
-  background: #07080b;
+  background: #0f1519;
+}
+
+/* Kleurvlakken van lucht, water, oever en zon waar het glas boven zweeft. */
+.glass-backdrop {
+  background:
+    radial-gradient(1000px 560px at 4% -6%, rgba(246, 212, 77, 0.34), transparent 60%),
+    radial-gradient(1500px 820px at 70% 4%, rgba(44, 106, 137, 0.85), transparent 62%),
+    radial-gradient(1600px 700px at 22% 62%, rgba(78, 127, 148, 0.55), transparent 64%),
+    radial-gradient(1300px 680px at 94% 96%, rgba(65, 140, 64, 0.55), transparent 62%),
+    radial-gradient(1000px 560px at 2% 104%, rgba(118, 88, 48, 0.55), transparent 64%),
+    linear-gradient(160deg, #1d3340 0%, #152a35 48%, #15241a 100%);
+}
+
+.glass-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 21, 25, 0.1), rgba(15, 21, 25, 0.35));
+}
+
+.tv-card,
+.glass-pill {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--glass-stroke);
+  background: var(--glass-fill);
+  box-shadow: var(--shadow-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  backdrop-filter: var(--blur-glass);
 }
 
 .tv-card {
-  overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid rgba(109, 127, 146, 0.35);
-  background:
-    linear-gradient(180deg, rgba(230, 179, 37, 0.07), transparent 42%),
-    #12161c;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+}
+
+.glass-pill {
+  border-radius: 999px;
+}
+
+/* Spiegelende lichtrand; achter de inhoud dankzij de stacking context van backdrop-filter. */
+.tv-card::before,
+.glass-pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0) 38%,
+    rgba(255, 255, 255, 0.03) 70%,
+    rgba(255, 255, 255, 0.08)
+  );
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .tv-card,
+  .glass-pill {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--glass-fill-strong);
+  }
 }
 
 @keyframes teunesen-progress {

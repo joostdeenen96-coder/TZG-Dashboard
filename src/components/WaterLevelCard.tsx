@@ -86,18 +86,18 @@ export function WaterLevelCard({ station, refreshing = false, stale = false }: W
   const days = dailyForecast(station.forecast, new Date());
 
   return (
-    <article className="tv-card relative flex h-full min-h-0 flex-col px-4 py-3" data-status={stale ? "fallback" : "ready"}>
+    <article className="tv-card relative flex h-full min-h-0 flex-col px-6 py-5" data-status={stale ? "fallback" : "ready"}>
       {refreshing ? <span className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-gold" aria-label="Vernieuwen" /> : null}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="truncate font-display text-[32px] leading-none font-semibold tracking-wide uppercase">
+          <h2 className="truncate font-display text-[32px] leading-none font-semibold tracking-[-0.015em]">
             {station.name}
           </h2>
-          <p className="mt-1 text-[13px] font-medium tracking-[0.14em] text-mist uppercase">
+          <p className="mt-1 text-[13px] font-bold tracking-[0.08em] text-mist uppercase">
             {station.river} · waterstand
           </p>
         </div>
-        <span className="shrink-0 rounded-full border border-[#e6b325]/45 bg-[#e6b325]/12 px-3 py-1 text-[13px] font-semibold tracking-[0.12em] text-[#f0d078] uppercase">
+        <span className="shrink-0 rounded-full border border-gold/40 bg-gold/12 px-3 py-1 text-[13px] font-bold tracking-[0.08em] text-gold uppercase">
           {station.status}
         </span>
       </div>
@@ -123,7 +123,7 @@ export function WaterLevelCard({ station, refreshing = false, stale = false }: W
                 {dayLabel.format(new Date(Date.parse(point.timestamp) + 24 * 60 * 60 * 1000))}
               </p>
               <p className="font-display text-[18px] leading-none font-semibold tabular-nums">{point.levelCm}</p>
-              <p className="truncate text-[11px] tracking-wide text-gold uppercase">{point.kind}</p>
+              <p className="truncate text-[11px] tracking-[0.02em] text-gold uppercase">{point.kind}</p>
             </li>
           ))}
         </ul>
