@@ -38,7 +38,7 @@ export function WeatherCard() {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-[20px] border border-white/12 bg-white/[0.06] text-gold">
+          <span className="grid h-11 w-11 place-items-center rounded-[20px] border border-veil/12 bg-veil/[0.06] text-gold">
             <CurrentIcon className="h-5 w-5" strokeWidth={2.2} />
           </span>
           <h2 className="font-display text-[32px] leading-none font-semibold tracking-[-0.015em]">Weerbericht</h2>

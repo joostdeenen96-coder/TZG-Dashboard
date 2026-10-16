@@ -22,7 +22,7 @@ const emptyConfig: DashboardConfig = {
 };
 
 const fieldClass =
-  "mt-1 w-full rounded-lg border border-white/12 bg-ink px-3 py-2 text-[16px] text-paper outline-none focus:border-gold";
+  "mt-1 w-full rounded-lg border border-veil/12 bg-ink px-3 py-2 text-[16px] text-paper outline-none focus:border-gold";
 
 function goToDashboard(event: MouseEvent<HTMLAnchorElement>) {
   event.preventDefault();

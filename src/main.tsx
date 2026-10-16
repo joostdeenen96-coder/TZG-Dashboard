@@ -8,8 +8,10 @@ import "./index.css";
 import App from "./App.tsx";
 import { ScreenGuard } from "./components/ScreenGuard.tsx";
 import { installTvGuards, tvLog } from "./services/tvLog.ts";
+import { applyStoredDisplayPrefs } from "./hooks/useDisplayPrefs.ts";
 
 installTvGuards();
+applyStoredDisplayPrefs();
 
 const root = document.getElementById("root");
 if (!root) {

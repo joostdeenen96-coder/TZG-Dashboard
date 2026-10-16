@@ -88,7 +88,7 @@ export function NewsCard() {
                   WijTeunesen
                   {active.category ? <span className="ml-3 font-medium tracking-normal text-mist normal-case">{active.category}</span> : null}
                 </p>
-                <p className="font-display text-[18px] tracking-[0.16em] text-white/70 tabular-nums">
+                <p className="font-display text-[18px] tracking-[0.16em] text-mist tabular-nums">
                   {String((shown.indexOf(active) >= 0 ? shown.indexOf(active) : index) + 1).padStart(2, "0")} / {String(shown.length).padStart(2, "0")}
                 </p>
               </div>
@@ -104,7 +104,7 @@ export function NewsCard() {
           </div>
         </motion.div>
       </AnimatePresence>
-      <div className="absolute right-0 bottom-0 left-0 z-10 h-1.5 bg-white/15">
+      <div className="absolute right-0 bottom-0 left-0 z-10 h-1.5 bg-veil/15">
         <div key={`${active.id}-${index}`} className="progress-bar h-full w-full bg-gold" style={{ animationDuration: `${ROTATE_MS}ms` }} />
       </div>
     </article>

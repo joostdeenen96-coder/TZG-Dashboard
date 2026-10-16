@@ -91,7 +91,7 @@ export function DieselCard() {
             key={`${week.peildatum}-${week.toeslagPercentage}`}
             data-week={formatWeekNumber(week.peildatum)}
             className={`grid min-h-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-4 rounded-[20px] border px-4 ${
-              index === 0 ? "border-gold/45 bg-gold/8" : "border-white/12 bg-white/[0.06]"
+              index === 0 ? "border-gold/45 bg-gold/8" : "border-veil/12 bg-veil/[0.06]"
             }`}
           >
             <div className="min-w-0">

@@ -135,7 +135,7 @@ export function AgendaBar() {
         {agenda.items.map((item) => {
           const face = chipFace(item);
           return (
-            <article key={item.id} className="flex min-w-0 flex-1 items-center gap-3 rounded-[20px] border border-white/12 bg-white/[0.06] px-3.5 py-2.5">
+            <article key={item.id} className="flex min-w-0 flex-1 items-center gap-3 rounded-[20px] border border-veil/12 bg-veil/[0.06] px-3.5 py-2.5">
               <div className="w-[88px] shrink-0 border-r border-gold/35 pr-3 text-center">
                 <p className={`font-display leading-none font-semibold whitespace-nowrap text-gold tabular-nums ${face.day.includes("–") ? "text-[24px]" : "text-[30px]"}`}>
                   {face.day}
