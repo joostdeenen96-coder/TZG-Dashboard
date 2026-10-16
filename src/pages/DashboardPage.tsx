@@ -75,14 +75,14 @@ export function DashboardPage() {
             <section className="grid h-[640px] shrink-0 grid-cols-4 gap-4">
               {levels ? (
                 <>
+                  <WidgetBoundary title={levels.maxau.name}>
+                    <WaterLevelCard station={levels.maxau} refreshing={water.refreshing} stale={water.status === "fallback"} />
+                  </WidgetBoundary>
                   <WidgetBoundary title={levels.kaub.name}>
                     <WaterLevelCard station={levels.kaub} refreshing={water.refreshing} stale={water.status === "fallback"} />
                   </WidgetBoundary>
                   <WidgetBoundary title={levels.ruhrort.name}>
                     <WaterLevelCard station={levels.ruhrort} refreshing={water.refreshing} stale={water.status === "fallback"} />
-                  </WidgetBoundary>
-                  <WidgetBoundary title={levels.maxau.name}>
-                    <WaterLevelCard station={levels.maxau} refreshing={water.refreshing} stale={water.status === "fallback"} />
                   </WidgetBoundary>
                 </>
               ) : (

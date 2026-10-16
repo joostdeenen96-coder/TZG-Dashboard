@@ -21,7 +21,7 @@ npm run preview
 ## Opbouw
 
 - Bovenbalk met logo en live klok (Europe/Amsterdam)
-- Vier kaarten: Kaub, Ruhrort, Maxau en dieseltoeslag
+- Vier kaarten: Maxau, Kaub, Ruhrort en dieseltoeslag
 - Groot WijTeunesen-overzicht (`/sites/wt-nieuws`), laatste vijftien Nederlandse berichten van de hele site, met categorie, wissel elke 20 seconden, met foto als die er is
 - Kleine onderbalk met de Nederlandse WijTeunesen-agenda, komende afspraken naast elkaar
 
