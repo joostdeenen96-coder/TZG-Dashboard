@@ -92,7 +92,7 @@ export function AgendaBar() {
   if (state.status === "error") {
     return (
       <div className="tv-card flex h-full items-center gap-4 px-6" data-status="error">
-        <p className="text-[13px] font-semibold tracking-[0.22em] text-gold uppercase">Agenda</p>
+        <p className="text-[13px] font-semibold tracking-[0.08em] text-gold uppercase">Agenda</p>
         <p className="truncate text-[18px] text-mist">{state.message}</p>
       </div>
     );
@@ -101,7 +101,7 @@ export function AgendaBar() {
   if (state.status === "empty") {
     return (
       <div className="tv-card flex h-full items-center gap-4 px-6" data-status="empty">
-        <p className="font-display text-[28px] leading-none font-semibold tracking-wide">Agenda</p>
+        <p className="font-display text-[28px] leading-none font-semibold tracking-[-0.015em]">Agenda</p>
         <p className="text-[18px] text-mist">Geen komende afspraken.</p>
       </div>
     );
@@ -111,7 +111,7 @@ export function AgendaBar() {
   if (!agenda.connected) {
     return (
       <div className="tv-card flex h-full items-center gap-4 px-6" data-status={state.status}>
-        <p className="text-[13px] font-semibold tracking-[0.22em] text-gold uppercase">Agenda</p>
+        <p className="text-[13px] font-semibold tracking-[0.08em] text-gold uppercase">Agenda</p>
         <p className="truncate text-[18px] text-mist">{agenda.error || "WijTeunesen-agenda niet bereikbaar."}</p>
       </div>
     );
@@ -120,23 +120,23 @@ export function AgendaBar() {
   if (agenda.items.length === 0) {
     return (
       <div className="tv-card flex h-full items-center gap-4 px-6" data-status="empty">
-        <p className="font-display text-[28px] leading-none font-semibold tracking-wide">Agenda</p>
+        <p className="font-display text-[28px] leading-none font-semibold tracking-[-0.015em]">Agenda</p>
         <p className="text-[18px] text-mist">Geen komende afspraken.</p>
       </div>
     );
   }
 
   return (
-    <section className="tv-card flex h-full min-h-0 items-center gap-5 overflow-hidden px-5" data-status={state.status} aria-label="Agenda">
+    <section className="tv-card flex h-full min-h-0 items-center gap-5 overflow-hidden px-6" data-status={state.status} aria-label="Agenda">
       <div className="w-[120px] shrink-0">
-        <p className="font-display text-[32px] leading-none font-semibold tracking-wide">Agenda</p>
+        <p className="font-display text-[32px] leading-none font-semibold tracking-[-0.015em]">Agenda</p>
       </div>
       <div className="flex min-w-0 flex-1 items-stretch gap-3 overflow-hidden">
         {agenda.items.map((item) => {
           const face = chipFace(item);
           return (
-            <article key={item.id} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate/35 bg-black/25 px-3.5 py-2.5">
-              <div className="w-[88px] shrink-0 border-r border-gold/30 pr-3 text-center">
+            <article key={item.id} className="flex min-w-0 flex-1 items-center gap-3 rounded-[20px] border border-veil/12 bg-veil/[0.06] px-3.5 py-2.5">
+              <div className="w-[88px] shrink-0 border-r border-gold/35 pr-3 text-center">
                 <p className={`font-display leading-none font-semibold whitespace-nowrap text-gold tabular-nums ${face.day.includes("–") ? "text-[24px]" : "text-[30px]"}`}>
                   {face.day}
                 </p>

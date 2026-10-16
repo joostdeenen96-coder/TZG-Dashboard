@@ -18,10 +18,10 @@ type KpiCardProps = {
 };
 
 const toneClass: Record<KpiTone, string> = {
-  laag: "border-[#e6b325]/45 bg-[#e6b325]/12 text-[#f0d078]",
+  laag: "border-gold/40 bg-gold/12 text-gold",
   normaal: "border-slate/50 bg-slate/20 text-[#d5dee8]",
   hoog: "border-[#f4f7fb]/30 bg-[#f4f7fb]/10 text-[#f4f7fb]",
-  gold: "border-gold/45 bg-gold/12 text-[#f0d078]",
+  gold: "border-gold/45 bg-gold/12 text-gold",
 };
 
 const railClass: Record<KpiTone, string> = {
@@ -55,7 +55,7 @@ export function KpiCard({
       <span className={`absolute inset-y-0 left-0 w-1.5 ${railClass[tone]}`} />
       <div className="flex items-start justify-between gap-3 pl-2">
         <div className="min-w-0">
-          <h2 className="truncate font-display text-[32px] leading-none font-semibold tracking-wide uppercase">
+          <h2 className="truncate font-display text-[32px] leading-none font-semibold tracking-[-0.015em]">
             {title}
           </h2>
           <p className="mt-1 text-[14px] font-medium tracking-[0.14em] text-mist uppercase">{eyebrow}</p>

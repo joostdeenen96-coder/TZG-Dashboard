@@ -72,7 +72,7 @@ export function SlideshowCard() {
       <div className="absolute right-6 bottom-8 left-7 z-30 flex items-end justify-between gap-8">
         <div>
           <p className="text-[14px] font-semibold tracking-[0.28em] text-gold uppercase">Project</p>
-          <h2 className="mt-1 font-display text-[52px] leading-none font-semibold tracking-wide">{active.title}</h2>
+          <h2 className="mt-1 font-display text-[52px] leading-none font-semibold tracking-[-0.015em]">{active.title}</h2>
           <p className="mt-2 flex items-center gap-2 text-[20px] text-white/90">
             <MapPin className="h-5 w-5 text-gold" strokeWidth={2.2} />
             {active.location}

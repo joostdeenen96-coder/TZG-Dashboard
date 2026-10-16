@@ -72,25 +72,25 @@ export function WaterChart({ series, forecast }: WaterChartProps) {
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full" role="img" aria-label="Waterstand en verwachting">
-      <line x1={pad.left} y1={yOf(max)} x2={width - pad.right} y2={yOf(max)} stroke="rgba(147,160,174,0.25)" />
-      <line x1={pad.left} y1={yOf(min)} x2={width - pad.right} y2={yOf(min)} stroke="rgba(147,160,174,0.25)" />
-      <text x={4} y={yOf(max) + 4} fill="#93a0ae" fontSize="12">
+      <line x1={pad.left} y1={yOf(max)} x2={width - pad.right} y2={yOf(max)} className="stroke-veil/15" />
+      <line x1={pad.left} y1={yOf(min)} x2={width - pad.right} y2={yOf(min)} className="stroke-veil/15" />
+      <text x={4} y={yOf(max) + 4} className="fill-mist" fontSize="12">
         {max}
       </text>
-      <text x={4} y={yOf(min) + 4} fill="#93a0ae" fontSize="12">
+      <text x={4} y={yOf(min) + 4} className="fill-mist" fontSize="12">
         {min}
       </text>
-      {measured.length > 1 ? <path d={chartPath(measured, xOf, yOf)} fill="none" stroke="#9fd0ea" strokeWidth="2.4" /> : null}
+      {measured.length > 1 ? <path d={chartPath(measured, xOf, yOf)} fill="none" className="stroke-water" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /> : null}
       {bridge.length > 1 ? (
-        <path d={chartPath(bridge, xOf, yOf)} fill="none" stroke="#e6b325" strokeWidth="2.4" strokeDasharray="6 4" />
+        <path d={chartPath(bridge, xOf, yOf)} fill="none" className="stroke-gold" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 4" />
       ) : null}
       {estimateBridge.length > 1 ? (
-        <path d={chartPath(estimateBridge, xOf, yOf)} fill="none" stroke="#93a0ae" strokeWidth="2.2" strokeDasharray="2 4" />
+        <path d={chartPath(estimateBridge, xOf, yOf)} fill="none" className="stroke-mist" strokeWidth="2.2" strokeDasharray="2 4" />
       ) : null}
-      <text x={pad.left} y={height - 4} fill="#93a0ae" fontSize="12">
+      <text x={pad.left} y={height - 4} className="fill-mist" fontSize="12">
         {dayLabel.format(t0)}
       </text>
-      <text x={width - pad.right} y={height - 4} fill="#93a0ae" fontSize="12" textAnchor="end">
+      <text x={width - pad.right} y={height - 4} className="fill-mist" fontSize="12" textAnchor="end">
         {dayLabel.format(t1)}
       </text>
     </svg>

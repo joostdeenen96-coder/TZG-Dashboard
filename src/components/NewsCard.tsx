@@ -77,22 +77,22 @@ export function NewsCard() {
                 <img
                   src={active.imagePath}
                   alt=""
-                  className="h-[320px] w-[380px] rounded-xl object-contain"
+                  className="h-[320px] w-[380px] rounded-[20px] object-contain"
                   onError={() => setHiddenPhoto(active.id)}
                 />
               </div>
             ) : null}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <div className="flex items-center justify-between gap-6">
-                <p className="text-[13px] font-semibold tracking-[0.22em] text-gold uppercase">
+                <p className="text-[13px] font-semibold tracking-[0.08em] text-gold uppercase">
                   WijTeunesen
                   {active.category ? <span className="ml-3 font-medium tracking-normal text-mist normal-case">{active.category}</span> : null}
                 </p>
-                <p className="font-display text-[18px] tracking-[0.16em] text-white/70 tabular-nums">
+                <p className="font-display text-[18px] tracking-[0.16em] text-mist tabular-nums">
                   {String((shown.indexOf(active) >= 0 ? shown.indexOf(active) : index) + 1).padStart(2, "0")} / {String(shown.length).padStart(2, "0")}
                 </p>
               </div>
-              <h2 className="mt-2 line-clamp-2 pb-1 font-display text-[42px] leading-tight font-semibold tracking-wide">
+              <h2 className="mt-2 line-clamp-2 pb-1 font-display text-[42px] leading-tight font-semibold tracking-[-0.015em]">
                 {active.title}
               </h2>
               <p className="mt-3 line-clamp-[16] text-[22px] leading-snug text-paper/90">{active.summary}</p>
@@ -104,7 +104,7 @@ export function NewsCard() {
           </div>
         </motion.div>
       </AnimatePresence>
-      <div className="absolute right-0 bottom-0 left-0 z-10 h-1.5 bg-white/15">
+      <div className="absolute right-0 bottom-0 left-0 z-10 h-1.5 bg-veil/15">
         <div key={`${active.id}-${index}`} className="progress-bar h-full w-full bg-gold" style={{ animationDuration: `${ROTATE_MS}ms` }} />
       </div>
     </article>

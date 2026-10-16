@@ -7,7 +7,7 @@ type AdminPanelProps = {
 };
 
 const fieldClass =
-  "mt-1 w-full rounded-lg border border-slate/40 bg-ink px-3 py-2 text-[16px] text-paper outline-none focus:border-gold";
+  "mt-1 w-full rounded-lg border border-veil/12 bg-ink px-3 py-2 text-[16px] text-paper outline-none focus:border-gold";
 
 export function AdminPanel({ authenticated, onClose }: AdminPanelProps) {
   const [username, setUsername] = useState("admin");
@@ -91,11 +91,11 @@ export function AdminPanel({ authenticated, onClose }: AdminPanelProps) {
   }
 
   return (
-    <div className="absolute inset-0 z-20 grid place-items-center bg-black/75 p-8">
+    <div className="absolute inset-0 z-20 grid place-items-center bg-ink/55 backdrop-blur-xl p-8">
       <section className="tv-card w-[820px] overflow-hidden px-8 py-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-[36px] leading-none font-semibold tracking-wide uppercase">Beheer</h2>
+            <h2 className="font-display text-[36px] leading-none font-semibold tracking-[-0.015em]">Beheer</h2>
             <p className="mt-2 text-[16px] text-mist">API-koppelingen voor dit scherm.</p>
           </div>
           <button type="button" className="text-[16px] text-mist hover:text-paper" onClick={onClose}>
@@ -144,14 +144,14 @@ export function AdminPanel({ authenticated, onClose }: AdminPanelProps) {
             <div className="col-span-2 mt-2 flex items-center gap-3">
               <button
                 type="submit"
-                className="rounded-full border border-gold/50 bg-gold/15 px-5 py-2 text-[16px] font-semibold tracking-wide text-[#f0d078] uppercase"
+                className="rounded-full border border-gold/50 bg-gold/15 px-5 py-2 text-[16px] font-semibold tracking-[0.02em] text-gold uppercase"
                 disabled={status === "loading"}
               >
                 Opslaan
               </button>
               <button
                 type="button"
-                className="rounded-full border border-slate/50 px-5 py-2 text-[16px] font-semibold tracking-wide text-paper uppercase"
+                className="rounded-full border border-slate/50 px-5 py-2 text-[16px] font-bold tracking-[0.02em] text-paper uppercase"
                 disabled={status === "loading"}
                 onClick={() => void onTest()}
               >
@@ -185,7 +185,7 @@ export function AdminPanel({ authenticated, onClose }: AdminPanelProps) {
             <p className="text-[15px] text-mist">Eerste aanmelding: admin / teunesen. Wijzig het wachtwoord daarna.</p>
             <button
               type="submit"
-              className="mt-1 w-fit rounded-full border border-gold/50 bg-gold/15 px-5 py-2 text-[16px] font-semibold tracking-wide text-[#f0d078] uppercase"
+              className="mt-1 w-fit rounded-full border border-gold/50 bg-gold/15 px-5 py-2 text-[16px] font-semibold tracking-[0.02em] text-gold uppercase"
               disabled={status === "loading"}
             >
               Inloggen
@@ -195,7 +195,7 @@ export function AdminPanel({ authenticated, onClose }: AdminPanelProps) {
 
         {status === "loading" ? <p className="mt-4 text-[16px] text-mist">Bezig.</p> : null}
         {message ? (
-          <p className={`mt-4 text-[16px] ${status === "error" ? "text-[#f0d078]" : "text-paper"}`}>{message}</p>
+          <p className={`mt-4 text-[16px] ${status === "error" ? "text-gold" : "text-paper"}`}>{message}</p>
         ) : null}
       </section>
     </div>

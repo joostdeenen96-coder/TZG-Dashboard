@@ -22,7 +22,7 @@ const emptyConfig: DashboardConfig = {
 };
 
 const fieldClass =
-  "mt-1 w-full rounded-lg border border-slate/40 bg-ink px-3 py-2 text-[16px] text-paper outline-none focus:border-gold";
+  "mt-1 w-full rounded-lg border border-veil/12 bg-ink px-3 py-2 text-[16px] text-paper outline-none focus:border-gold";
 
 function goToDashboard(event: MouseEvent<HTMLAnchorElement>) {
   event.preventDefault();
@@ -115,7 +115,7 @@ export function AdminPage() {
         <header className="flex items-center justify-between gap-4 border-b border-slate/30 pb-4">
           <img src="/teunesen-logo.png" alt="Teunesen" className="h-12 w-auto" />
           <div className="text-right">
-            <h1 className="font-display text-[36px] leading-none font-semibold tracking-wide uppercase">Beheer</h1>
+            <h1 className="font-display text-[36px] leading-none font-semibold tracking-[-0.015em]">Beheer</h1>
             <a href="/" className="mt-1 inline-block text-[15px] text-mist hover:text-paper" onClick={goToDashboard}>
               Naar het scherm
             </a>
@@ -131,7 +131,7 @@ export function AdminPage() {
             }}
           >
             <section className="tv-card px-5 py-4">
-              <h2 className="font-display text-[26px] leading-none font-semibold tracking-wide uppercase">
+              <h2 className="font-display text-[26px] leading-none font-semibold tracking-[-0.015em]">
                 SharePoint Dieseltoeslag
               </h2>
               <label className="mt-4 block text-[14px] tracking-wide text-mist uppercase">
@@ -153,7 +153,7 @@ export function AdminPage() {
             </section>
 
             <section className="tv-card px-5 py-4">
-              <h2 className="font-display text-[26px] leading-none font-semibold tracking-wide uppercase">
+              <h2 className="font-display text-[26px] leading-none font-semibold tracking-[-0.015em]">
                 SharePoint Nieuws
               </h2>
               <label className="mt-4 block text-[14px] tracking-wide text-mist uppercase">
@@ -175,7 +175,7 @@ export function AdminPage() {
             </section>
 
             <section className="tv-card px-5 py-4">
-              <h2 className="font-display text-[26px] leading-none font-semibold tracking-wide uppercase">Weer</h2>
+              <h2 className="font-display text-[26px] leading-none font-semibold tracking-[-0.015em]">Weer</h2>
               <label className="mt-4 block text-[14px] tracking-wide text-mist uppercase">
                 Plaatsnaam
                 <input
@@ -189,7 +189,7 @@ export function AdminPage() {
             </section>
 
             <section className="tv-card px-5 py-4">
-              <h2 className="font-display text-[26px] leading-none font-semibold tracking-wide uppercase">Dashboard</h2>
+              <h2 className="font-display text-[26px] leading-none font-semibold tracking-[-0.015em]">Dashboard</h2>
               <label className="mt-4 block text-[14px] tracking-wide text-mist uppercase">
                 Refresh interval
                 <input
@@ -228,7 +228,7 @@ export function AdminPage() {
             <div className="flex flex-col gap-3 sm:flex-row md:col-span-2">
               <button
                 type="button"
-                className="rounded-full border border-slate/50 px-5 py-2 text-[16px] font-semibold tracking-wide text-paper uppercase"
+                className="rounded-full border border-slate/50 px-5 py-2 text-[16px] font-bold tracking-[0.02em] text-paper uppercase"
                 disabled={status === "loading"}
                 onClick={() => void onTest()}
               >
@@ -236,7 +236,7 @@ export function AdminPage() {
               </button>
               <button
                 type="submit"
-                className="rounded-full border border-gold/50 bg-gold/15 px-5 py-2 text-[16px] font-semibold tracking-wide text-[#f0d078] uppercase"
+                className="rounded-full border border-gold/50 bg-gold/15 px-5 py-2 text-[16px] font-semibold tracking-[0.02em] text-gold uppercase"
                 disabled={status === "loading"}
               >
                 Opslaan
@@ -245,7 +245,7 @@ export function AdminPage() {
           </form>
         ) : (
           <form className="tv-card mt-6 max-w-md px-5 py-4" onSubmit={(event) => void onLogin(event)}>
-            <h2 className="font-display text-[26px] leading-none font-semibold tracking-wide uppercase">Aanmelden</h2>
+            <h2 className="font-display text-[26px] leading-none font-semibold tracking-[-0.015em]">Aanmelden</h2>
             <label className="mt-4 block text-[14px] tracking-wide text-mist uppercase">
               Gebruikersnaam
               <input className={fieldClass} value={username} onChange={(event) => setUsername(event.target.value)} />
@@ -262,7 +262,7 @@ export function AdminPage() {
             </label>
             <button
               type="submit"
-              className="mt-4 rounded-full border border-gold/50 bg-gold/15 px-5 py-2 text-[16px] font-semibold tracking-wide text-[#f0d078] uppercase"
+              className="mt-4 rounded-full border border-gold/50 bg-gold/15 px-5 py-2 text-[16px] font-semibold tracking-[0.02em] text-gold uppercase"
               disabled={status === "loading"}
             >
               Inloggen
@@ -272,7 +272,7 @@ export function AdminPage() {
 
         {status === "loading" ? <p className="mt-4 text-[16px] text-mist">Bezig.</p> : null}
         {message ? (
-          <p className={`mt-4 text-[16px] ${status === "error" ? "text-[#f0d078]" : "text-paper"}`}>{message}</p>
+          <p className={`mt-4 text-[16px] ${status === "error" ? "text-gold" : "text-paper"}`}>{message}</p>
         ) : null}
       </div>
     </div>

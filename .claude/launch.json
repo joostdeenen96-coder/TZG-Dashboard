@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "dashboard", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 43123 },
+    { "name": "dashboard-web", "runtimeExecutable": "npx", "runtimeArgs": ["vite"], "port": 43123 }
+  ]
+}

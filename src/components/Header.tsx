@@ -1,4 +1,5 @@
-import { Cloud, CloudDrizzle, CloudRain, CloudSun, LoaderCircle, Sun } from "lucide-react";
+import { Cloud, CloudDrizzle, CloudRain, CloudSun, Droplet, LoaderCircle, Moon, Sun } from "lucide-react";
+import { useDisplayPrefs } from "../hooks/useDisplayPrefs";
 import { formatAmsterdamStamp, formatAmsterdamTime } from "../lib/format";
 import { readWeather } from "../services/dashboardService";
 import { useScreenConfig } from "../services/dashboardConfigService";
@@ -28,7 +29,7 @@ function HeaderWeather() {
   const weather = state.data;
   const Icon = weatherIcons[weather.icon];
   return (
-    <div className="flex items-center gap-3 border-r border-slate/40 pr-5" aria-label="Weerbericht">
+    <div className="flex items-center gap-3 border-r border-veil/12 pr-5" aria-label="Weerbericht">
       <Icon className="h-8 w-8 shrink-0 text-gold" strokeWidth={2.1} />
       <div className="min-w-0 leading-none">
         <p className="font-display text-[34px] font-semibold tabular-nums">{weather.temperatureC}°</p>
@@ -36,6 +37,36 @@ function HeaderWeather() {
           {weather.condition} · {plaatsnaam || weather.location}
         </p>
       </div>
+    </div>
+  );
+}
+
+function DisplayToggles() {
+  const { prefs, toggleTheme, toggleGlass } = useDisplayPrefs();
+  const ThemeIcon = prefs.theme === "dark" ? Moon : Sun;
+  const button =
+    "grid h-9 w-9 place-items-center rounded-full transition-colors duration-200 ease-out hover:bg-veil/12 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
+  return (
+    <div className="flex items-center gap-0.5 rounded-full border border-veil/12 bg-veil/[0.05] p-0.5" aria-label="Weergave">
+      <button
+        type="button"
+        className={`${button} ${prefs.glass ? "text-gold" : "text-mist"}`}
+        aria-pressed={prefs.glass}
+        aria-label={prefs.glass ? "Liquid glass uitzetten" : "Liquid glass aanzetten"}
+        title={prefs.glass ? "Liquid glass aan" : "Liquid glass uit"}
+        onClick={toggleGlass}
+      >
+        <Droplet className="h-[18px] w-[18px]" strokeWidth={1.8} fill={prefs.glass ? "currentColor" : "none"} fillOpacity={0.25} />
+      </button>
+      <button
+        type="button"
+        className={`${button} text-mist`}
+        aria-label={prefs.theme === "dark" ? "Licht thema" : "Donker thema"}
+        title={prefs.theme === "dark" ? "Donker thema" : "Licht thema"}
+        onClick={toggleTheme}
+      >
+        <ThemeIcon className="h-[18px] w-[18px]" strokeWidth={1.8} />
+      </button>
     </div>
   );
 }
@@ -53,15 +84,17 @@ export function Header({ now, fetchedAt, refreshing, stale, adminLabel, onAdmin 
       : `Laatste update ${updatedClock}`;
 
   return (
-    <header className="flex h-[78px] shrink-0 items-center justify-between border-b border-slate/30">
-      <img src="/teunesen-logo.png" alt="Teunesen" className="h-[58px] w-auto" />
+    <header className="glass-pill flex h-[78px] shrink-0 items-center justify-between pr-3 pl-[7px]">
+      <span className="logo-plate flex h-[64px] items-center rounded-full px-6">
+        <img src="/teunesen-logo.png" alt="Teunesen" className="h-[46px] w-auto" />
+      </span>
       <div className="flex items-center gap-5">
         <HeaderWeather />
         <div className="text-right">
           <p className="leading-none text-paper" data-clock={stamp}>
             <span className="text-[22px]">{date}</span>
             <span className="mx-3 text-gold">·</span>
-            <span className="font-display text-[40px] font-semibold tabular-nums tracking-wide">{time}</span>
+            <span className="font-display text-[40px] font-semibold tabular-nums tracking-[-0.01em]">{time}</span>
           </p>
           <p
             className="mt-1.5 flex items-center justify-end gap-2 text-[16px] tracking-wide text-mist"
@@ -73,9 +106,10 @@ export function Header({ now, fetchedAt, refreshing, stale, adminLabel, onAdmin 
             <span>{updatedLabel}</span>
           </p>
         </div>
+        <DisplayToggles />
         <button
           type="button"
-          className="rounded-full border border-gold/50 bg-gold/10 px-4 py-2 text-[15px] font-semibold tracking-[0.12em] text-[#f0d078] uppercase"
+          className="rounded-full border border-veil/20 bg-veil/10 px-5 py-2.5 text-[15px] font-bold tracking-[0.02em] text-paper uppercase"
           onClick={onAdmin}
         >
           {adminLabel}

@@ -80,7 +80,7 @@ export function DieselCard() {
   const blocks = newestWeeks(state.data.weken?.length ? state.data.weken : [state.data]);
 
   return (
-    <article className="tv-card relative flex h-full min-h-0 flex-col px-3 py-3" data-status={state.status}>
+    <article className="tv-card relative flex h-full min-h-0 flex-col p-4" data-status={state.status}>
       {state.refreshing ? <span className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-gold" aria-label="Vernieuwen" /> : null}
       <ul
         className="grid min-h-0 flex-1 gap-2"
@@ -90,8 +90,8 @@ export function DieselCard() {
           <li
             key={`${week.peildatum}-${week.toeslagPercentage}`}
             data-week={formatWeekNumber(week.peildatum)}
-            className={`grid min-h-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-4 rounded-xl border px-4 ${
-              index === 0 ? "border-gold/45 bg-gold/8" : "border-slate/40 bg-black/25"
+            className={`grid min-h-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-4 rounded-[20px] border px-4 ${
+              index === 0 ? "border-gold/45 bg-gold/8" : "border-veil/12 bg-veil/[0.06]"
             }`}
           >
             <div className="min-w-0">
