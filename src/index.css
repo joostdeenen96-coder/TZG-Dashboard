@@ -70,17 +70,22 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Logo: leisteen en geel op licht, wit en geel op donker. */
-.logo-light {
-  display: none;
+/* Logo in de originele kleuren; op donker op een licht glasplaatje zodat het leesbaar blijft. */
+.logo-plate {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.36), rgba(232, 232, 227, 0.22));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
 }
 
-:root[data-theme="light"] .logo-light {
-  display: block;
-}
-
-:root[data-theme="light"] .logo-dark {
-  display: none;
+:root[data-theme="light"] .logo-plate {
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Kleurvlakken van lucht, water, oever en zon waar het glas boven zweeft. */

@@ -84,9 +84,10 @@ export function Header({ now, fetchedAt, refreshing, stale, adminLabel, onAdmin 
       : `Laatste update ${updatedClock}`;
 
   return (
-    <header className="glass-pill flex h-[78px] shrink-0 items-center justify-between pr-3 pl-8">
-      <img src="/teunesen-logo.png" alt="Teunesen" className="logo-light h-[52px] w-auto" />
-      <img src="/teunesen-logo-wit.svg" alt="Teunesen" className="logo-dark h-[46px] w-auto" />
+    <header className="glass-pill flex h-[78px] shrink-0 items-center justify-between pr-3 pl-[7px]">
+      <span className="logo-plate flex h-[64px] items-center rounded-full px-6">
+        <img src="/teunesen-logo.png" alt="Teunesen" className="h-[46px] w-auto" />
+      </span>
       <div className="flex items-center gap-5">
         <HeaderWeather />
         <div className="text-right">
